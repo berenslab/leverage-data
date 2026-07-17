@@ -1,0 +1,7 @@
+.venv/*
+.vscode/*
+__pycache__/*
+quality_results/*
+results/*
+.secrets.yaml
+.env
