@@ -13,16 +13,17 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
 
 
-
+import os
+from PIL import Image
 from sklearn.metrics import roc_auc_score, balanced_accuracy_score, accuracy_score
 import pandas as pd
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import cross_val_score
 
+    
 def linear_acc(X, 
                y, 
-               df, 
                 id, id_split_name = 'id', 
                 target_label_name = 'thick_label',
                 SPLIT_SEED = 2026, 
@@ -34,10 +35,10 @@ def linear_acc(X,
         stratify_col = target_label_name
         print(f"No stratification column provided using stratify col as {stratify_col}.")
 
-    if not isinstance(df, pd.DataFrame):
-        df = pd.DataFrame(df, columns=['image_name'])
-        df[target_label_name] =y
-        df['id'] = id
+    df = pd.DataFrame([id, y]).T
+    df.columns = ['id', 'label']
+    # df[target_label_name] =y
+    # df['id'] = id
 
     n_unique_labels = len(set(y))
     print('n unique labels',n_unique_labels )

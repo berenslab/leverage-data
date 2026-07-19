@@ -6,15 +6,13 @@ import torch.nn as nn
 import torch.distributed as dist
 import torchvision.models as models
 from torchvision import transforms as T
-from .tinc.main import get_vicreg_model
-from .vit_encoder import SpatioTemporalEncoder
-from .RETFound.util.pos_embed import interpolate_pos_embed
-from  .RETFound.models_vit import RETFound_mae
+# from .RETFound.util.pos_embed import interpolate_pos_embed
+# from  .RETFound.models_vit import RETFound_mae
 from timm.models.layers import trunc_normal_
 import inspect
 import numpy as np
-import pytorch_lightning as pl
-print('model params',inspect.signature(RETFound_mae))
+# import pytorch_lightning as pl
+# print('model params',inspect.signature(RETFound_mae))
 
 #-----------------------Models----------------------#
 def retfound_encoder(img_size=224, root = ''):

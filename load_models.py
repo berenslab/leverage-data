@@ -1,6 +1,6 @@
 from models import *
 def get_encoder(weights_path:str=None,  device:str="cuda:0",
-                 img_size = 224, eval_augur = False, args = None, config_file = None):
+                 img_size = 224, eval_augur = False, cloud = 'mlcloud', args = None, config_file = None):
     
     embed_dim = 512
     backbone_model = None
@@ -22,7 +22,7 @@ def get_encoder(weights_path:str=None,  device:str="cuda:0",
         print('initial model str', model_str)
         if 'TMI' in model_str:
             model_str = '_'.join(model_str.split('_')[:-1])
-            if args.cloud != 'mlcloud':
+            if cloud != 'mlcloud':
                 model_str = model_str.split('TMI')[0]
             print('updated model_str', model_str)
         else:
