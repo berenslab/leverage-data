@@ -28,7 +28,8 @@ root = cfg['DATASETS']['NAKO']['MLCLOUD']
 # Variables of the NAKO dataset
 NAKO_DIR = {'590': f'{root}'}
 IMAGE_TYPES = ['rt_leftcentral', 'rt_leftnasal', 'rt_rightcentral', 'rt_rightnasal']
-EYE_DISEASES = ['d_an_aug_2', 'd_an_aug_3', 'd_an_met_1']
+EYE_DISEASES = ['d_an_aug_1', 'd_an_aug_2', 'd_an_aug_3', 'd_an_metdm2c_2', 
+                'd_an_metdm2c_1','d_an_met_1']
 SEED = 42
 NORMALIZATION = {'mean': [0.419, 0.209, 0.122], 'std': [0.270, 0.157, 0.105]}
 
