@@ -8,8 +8,8 @@ import pandas as pd
 from torch.utils.data import Subset
 from load_data import load_nako
 from torch.utils.data import DataLoader
-from time_distance.MAE import models_mae
-from lightning_helpers import MAELightning
+# from time_distance.MAE import models_mae
+# from lightning_helpers import MAELightning
 from torchvision import transforms
 from sklearn.metrics import accuracy_score, ConfusionMatrixDisplay
 from multi_level_split.util import train_test_split as patient_id_split

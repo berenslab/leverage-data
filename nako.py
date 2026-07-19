@@ -13,6 +13,7 @@ import random
 from PIL import Image
 import pandas as pd
 import torch
+from omegaconf import OmegaConf
 from torch.utils.data import Dataset
 from torchvision.datasets import CIFAR10
 import torchvision.transforms as transforms
@@ -20,9 +21,12 @@ from sklearn.model_selection import train_test_split, KFold
 from tqdm import tqdm
 # import fundus_image_toolbox as fit
 
+config_file = '.secrets.yaml'
+cfg = OmegaConf.load(config_file)
+root = cfg['DATASETS']['NAKO']['MLCLOUD']
 
 # Variables of the NAKO dataset
-NAKO_DIR = {'590': '/gpfs01/berens/data/data/medical_imaging/NAKO/nako_decrypted', '810': '/gpfs01/berens/data/data/NAKO810/nako_decrypted'}
+NAKO_DIR = {'590': f'{root}'}
 IMAGE_TYPES = ['rt_leftcentral', 'rt_leftnasal', 'rt_rightcentral', 'rt_rightnasal']
 EYE_DISEASES = ['d_an_aug_2', 'd_an_aug_3', 'd_an_met_1']
 SEED = 42
@@ -51,15 +55,15 @@ def get_nako_paths(dataset='590', baseline_followup='baseline', image_dir='image
     nako_paths = {'nako_dir': nako_dir,
                   'image_dir': os.path.join(nako_dir, image_dir),
                   'lowres_dir': os.path.join(nako_dir, 'images_lowres'),
-                  'metadata_file': os.path.join(nako_dir, 'labels', 'metadata_translated.csv'),
-                  'labels_file': os.path.join(nako_dir, 'labels', 'labels.csv'),
+                  'metadata_file': os.path.join(nako_dir, 'NAKO_metadata','labels', 'metadata_translated.csv'),
+                  'labels_file': os.path.join(nako_dir, 'NAKO_metadata','labels', 'labels.csv'),
                   'quality_dir': quality_dir}
     
     if image_dir == 'images_lowres':
         nako_paths['image_dir'] = os.path.join(nako_paths['image_dir'], str(img_res))
 
     # Temporary: metadata for 810 is not yet available
-    nako_paths['metadata_file'] = '/gpfs01/berens/data/data/medical_imaging/NAKO/nako_decrypted/labels/metadata_translated.csv'
+    nako_paths['metadata_file'] = f'{root}/NAKO_metadata/labels/metadata_translated.csv'
 
     return nako_paths
 

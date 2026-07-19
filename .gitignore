@@ -3,5 +3,7 @@
 __pycache__/*
 quality_results/*
 results/*
+datasets/*
 .secrets.yaml
+.weights.yaml
 .env
