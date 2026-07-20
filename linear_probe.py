@@ -102,12 +102,15 @@ def main():
     for p in encoder.parameters():
         p.requires_grad = False
 
+    print(f"encoder {encoder} in_features {in_features} weights_path_returned {weights_path_returned} backbone_model_str {backbone_model_str}")
     features = extract_embeddings(encoder, train_loader_all, args.device, testrun = args.testrun)
 
     backbone_feat, label1, ids_, paths_ = features
     print(backbone_feat.shape, label1.shape, ids_.shape, np.unique(label1, return_counts=True))
 
-    acc, auc = linear_acc(X = backbone_feat, y = label1, id = ids_, 
+    acc, auc = linear_acc(X = backbone_feat, 
+                          y = label1, 
+                          id = ids_, 
                        stratify_col='label' )
     print(f"acc {acc} auc {auc}")
     print("---- \n computing tsne \n ---")
@@ -116,7 +119,7 @@ def main():
     pca = PCA(n_components=100) 
     H_pca = pca.fit_transform(backbone_feat) 
     Y = TSNE(random_state=2000).fit(H_pca)
-
+    print('done tsne', Y.shape)
     exp_dir = f"results/{args.dataset_name}/{args.task}/{args.batch_size}_{start_time_fmt}"
     os.makedirs(exp_dir, exist_ok = True)
     # np.savez(f"{exp_dir}/embeddings.npz",  Y = Y,  pcs = H_pca,  ids = ids_,
@@ -128,8 +131,10 @@ def main():
     plot_title = f'{args.dataset_name} '
     
 
-    asyncio.run(plot_embeddings(ids_, Y, label1,
-                    experiment_directory = exp_dir, 
+    asyncio.run(plot_embeddings(ids_, 
+                                Y, 
+                                label1,
+                                experiment_directory = exp_dir, 
                     plot_title = plot_title, 
                     stylef = cfg['STYLEF']
                             ))

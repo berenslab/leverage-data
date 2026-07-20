@@ -25,7 +25,7 @@ from sklearn.model_selection import cross_val_score
 def linear_acc(X, 
                y, 
                 id, id_split_name = 'id', 
-                target_label_name = 'thick_label',
+                target_label_name = 'label',
                 SPLIT_SEED = 2026, 
                 evaluate_weights = False, 
                 stratify_col = None,
@@ -37,9 +37,7 @@ def linear_acc(X,
 
     df = pd.DataFrame([id, y]).T
     df.columns = ['id', 'label']
-    # df[target_label_name] =y
-    # df['id'] = id
-
+  
     n_unique_labels = len(set(y))
     print('n unique labels',n_unique_labels )
 

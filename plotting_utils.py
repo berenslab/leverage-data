@@ -81,16 +81,11 @@ async def plot_embeddings(ids,
                         experiment_directory,
                         stylef =None):
     print('plotting embeddings')
-    df = pd.DataFrame({"patient_id": ids, "labels":labels})
-    print('labels', np.unique(df['labels'], return_counts = True))
-
+    
     acc1, auc1 = linear_acc(X = embeddings, 
                           y = labels,
-                          df =df, 
                           id = id,
-                          id_split_name = 'patient_id', 
-                          target_label_name = "labels",
-                          stratify_col = 'patient_id',
+                          target_label_name = "label",
                           SPLIT_SEED = 10, 
                         evaluate_weights=False ) 
     
