@@ -95,6 +95,7 @@ def main():
                              f'{dataset_root}/NAKO_metadata/df_classify.csv',
                              transform=nako_transform_train)
     train_loader_all = DataLoader(dataset_train_all, batch_size = args.batch_size, shuffle = False)
+    print(len(train_loader_all))
 
     encoder, in_features, weights_path_returned, backbone_model_str = get_encoder(weights_path, args.device, 
                                                                              img_size=args.img_size,)
@@ -102,7 +103,6 @@ def main():
     for p in encoder.parameters():
         p.requires_grad = False
 
-    print(f"encoder {encoder} in_features {in_features} weights_path_returned {weights_path_returned} backbone_model_str {backbone_model_str}")
     features = extract_embeddings(encoder, train_loader_all, args.device, testrun = args.testrun)
 
     backbone_feat, label1, ids_, paths_ = features
@@ -122,21 +122,24 @@ def main():
     print('done tsne', Y.shape)
     exp_dir = f"results/{args.dataset_name}/{args.task}/{args.batch_size}_{start_time_fmt}"
     os.makedirs(exp_dir, exist_ok = True)
-    # np.savez(f"{exp_dir}/embeddings.npz",  Y = Y,  pcs = H_pca,  ids = ids_,
-    #           H = backbone_feat, lbls1 = label1,
-            #   )
-    # assert backbone_feat.shape[1] == in_dim
-    #----------------------------------------------------------------#
-    
-    plot_title = f'{args.dataset_name} '
-    
+   
+   
+    acc1, auc1 = linear_acc(X = Y, 
+                          y = label1, 
+                          id = ids_, 
+                       stratify_col='label' )
+    print(f"acc1 {acc1} auc1 {auc1}")
+    pca_results = {'acc1': acc1, 'auc1': auc1}
 
-    asyncio.run(plot_embeddings(ids_, 
+
+    plot_title = f'{args.dataset_name}'
+
+    asyncio.run(plot_embeddings(pca_results, 
                                 Y, 
                                 label1,
                                 experiment_directory = exp_dir, 
                     plot_title = plot_title, 
-                    stylef = cfg['STYLEF']
+                    stylef = cfg['MAIN']['MLCLOUD']['STYLEF']
                             ))
 
     

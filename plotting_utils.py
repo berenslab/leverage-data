@@ -26,7 +26,7 @@ def get_token_chat_id():
 
 class TelegramBot:
     def __init__(self, token=None, chat_id=None):
-        self.rc = get_token_chat_id()
+        # self.rc = get_token_chat_id()
 
         self.token = os.environ.get('telegram_token')
         self.chat_id = os.environ.get('telegram_chat_id')
@@ -74,7 +74,7 @@ def create_legend(unique_label, cm, ax, legend_title, location = 'upper left', m
         handles.append(plt.Line2D([], [], marker='o', color=cm(i / len(unique_label)), linestyle='None', markersize=markersize, label=label))
     return ax.legend(handles=handles,loc = location,ncol=n_col, frameon = False,title=legend_title, fontsize = fontsize)
       
-async def plot_embeddings(ids, 
+async def plot_embeddings(results, 
                         embeddings, 
                         labels, 
                         plot_title, 
@@ -82,13 +82,15 @@ async def plot_embeddings(ids,
                         stylef =None):
     print('plotting embeddings')
     
-    acc1, auc1 = linear_acc(X = embeddings, 
-                          y = labels,
-                          id = id,
-                          target_label_name = "label",
-                          SPLIT_SEED = 10, 
-                        evaluate_weights=False ) 
+    # acc1, auc1 = linear_acc(X = embeddings, 
+    #                       y = labels,
+    #                       id = id,
+    #                       target_label_name = "label",
+    #                       SPLIT_SEED = 10, 
+    #                     evaluate_weights=False ) 
     
+    acc1 = results['acc1']
+    auc1 = results['auc1']
     print('unique labels are', np.unique(labels))
     n_unique_labels = len(np.unique(labels))
     if n_unique_labels == 2:
