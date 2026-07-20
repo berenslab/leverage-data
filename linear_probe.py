@@ -129,7 +129,7 @@ def main():
                           id = ids_, 
                        stratify_col='label' )
     print(f"acc1 {acc1} auc1 {auc1}")
-    pca_results = {'acc1': acc1, 'auc1': auc1}
+    pca_results = {'acc0': acc, 'auc0': auc, 'acc1': acc1, 'auc1': auc}
 
 
     plot_title = f'{args.dataset_name}'

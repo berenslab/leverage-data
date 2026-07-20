@@ -3,9 +3,6 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.colors import ListedColormap
-from PIL import ImageOps
-import matplotlib as mpl
-from utils import linear_acc
 import numpy as np
 import json
 import os
@@ -89,8 +86,12 @@ async def plot_embeddings(results,
     #                       SPLIT_SEED = 10, 
     #                     evaluate_weights=False ) 
     
+    acc0 = results['acc0']
+    auc0 = results['auc0']
+
     acc1 = results['acc1']
     auc1 = results['auc1']
+
     print('unique labels are', np.unique(labels))
     n_unique_labels = len(np.unique(labels))
     if n_unique_labels == 2:
@@ -106,7 +107,7 @@ async def plot_embeddings(results,
             sc = ax.scatter(embeddings[:, 0], embeddings[:, 1], c=labels, cmap=cm, alpha=0.8)  
             create_legend(unique_label = unique_labels, cm = cm, ax = ax, legend_title = '')
 
-            f_plot_title = f'{plot_title} acc. = {acc1:.1f}% auc. = {auc1:.1f}'
+            f_plot_title = f'{plot_title} H_acc. = {acc0:.1f}% H_auc. = {auc0:.1f} acc. = {acc1:.1f}% auc. = {auc1:.1f}'
             plt.title(f_plot_title)
             
             s_path = f"{experiment_directory}/{acc1:.1f}_{auc1:.1f}"
@@ -130,3 +131,7 @@ async def plot_embeddings(results,
 
         message = TelegramBot()
         await message.send(f'{s_path}.png')
+
+
+
+

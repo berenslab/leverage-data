@@ -45,7 +45,7 @@ def linear_acc(X,
     df['index'] = range(df.shape[0])
     train, test_val = patient_id_split(df, "index", 
                                        split_by = id_split_name, 
-                                       test_split=0.3, seed=SPLIT_SEED, 
+                                       test_split=0.2, seed=SPLIT_SEED, 
                                        stratify_by = stratify_col
                                          ) #'thickness_label'
     
@@ -90,10 +90,10 @@ def linear_acc(X,
     
     else:
         if n_unique_labels < 3:
-            lin = LogisticRegression( solver='lbfgs', n_jobs=-1, max_iter= 1000)
+            lin = LogisticRegression( solver='lbfgs',  max_iter= 1000)
 
         else:
-            lin = LogisticRegression(multi_class='multinomial', solver='lbfgs', n_jobs=-1, max_iter= 1000)
+            lin = LogisticRegression(multi_class='multinomial', solver='lbfgs',  max_iter= 1000)
 
         lin.fit(X_train, y_train)
         # use balanced accuracy for imbalanced datasets
@@ -137,10 +137,10 @@ def linear_acc(X,
 #     y_test = y[test_mask]
 
 #     if n_unique_labels < 3:
-#         lin = LogisticRegression( solver='lbfgs', n_jobs=-1, max_iter= 1000)
+#         lin = LogisticRegression( solver='lbfgs',  max_iter= 1000)
 
 #     else:
-#         lin = LogisticRegression(multi_class='multinomial', solver='lbfgs', n_jobs=-1, max_iter= 1000)
+#         lin = LogisticRegression(multi_class='multinomial', solver='lbfgs',  max_iter= 1000)
 
 #     lin.fit(X_train, y_train)
 #     acc = round(lin.score(X_test, y_test) * 100, 2)
