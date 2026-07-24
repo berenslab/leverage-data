@@ -5,6 +5,7 @@ quality_results/*
 results/*
 datasets/*
 log_dir/*
+figures/*
 .secrets.yaml
 .weights.yaml
 .env
