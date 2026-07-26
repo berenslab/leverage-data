@@ -6,6 +6,8 @@ results/*
 datasets/*
 log_dir/*
 figures/*
+chkpt_dir/*
+metadata/*
 .secrets.yaml
 .weights.yaml
 .env
