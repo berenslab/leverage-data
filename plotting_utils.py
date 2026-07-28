@@ -11,6 +11,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 import os
 from PIL.PngImagePlugin import PngImageFile
+plt.rcParams.get('font.family', 'arial')
 
 load_dotenv()
 
@@ -133,145 +134,548 @@ async def plot_embeddings(results,
         await message.send(f'{s_path}.png')
 
 
-# def draw_curves(all_img_to_plot, curves_dict, first_conversion_idx = None,
-#                  marker_panel_idx = None, save_path = None):
-#     """
-#     all_img_to_plot : [images, labels, [img_id]]
-#                       labels = list of diagnosis_amd_grade per visit
-#     curves_dict     : {model_name: [curve_visit_0, curve_visit_1, ...]}
+from plotting_helpers import get_axis_limits, get_base_key, \
+    get_yticks, add_axis_break, make_publication_legend, make_publication_legend_columns
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from itertools import product
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
+from matplotlib.lines import Line2D
+import matplotlib.patches as mpatches
+import math
 
-#     Conversion marker: a single grey downward triangle on the x-axis at the
-#     conversion year, shown only in the penultimate panel (last pre-conversion visit).
-#     """
-#     color_groups = {    
-#     'dino_nako': '#000000',
-#     'dino_meta': '#05771D',
-#     'retfound':  '#90A4AE',  # fixed typo
-#     'nako_mae':  '#6A1B9A',
-#     'simclr_inet_nako': '#D81B60',
-#     'simclr_nako': '#F3D0DC',
-#     'scratch': '#1565C0',
-#     'resnet_imagenet': '#42A5F5',
-#                     }
-#     new_names = {
-#         'dino_nako': 'DINOv2 NAKO',
-#         'dino_meta': 'DINOv2 LVD',
-#         'retfound': 'RETFound',
-#         'resnet_imagenet': 'ResNet INet',
-#         'nako_mae': "MAE NAKO",
-#         'simclr_nako': 'SimCLR NAKO',
-#         'simclr_inet_nako': 'SimCLR INet NAKO',
-#         'scratch': "ResNet Scratch"
-        
-#     }
+
+def plot_finetuning_strategies(
+        all_plots,
+        all_metrics=('test/ibs', 'test/concordance_index'),
+        more_suptitle='',
+        show_count=False,
+        xticks=None,
+        save_path='',
+        to_plot='fet',
+        num_y_ticks=6,
+        axis_br_size=0.012,
+        axis_br_gap=0.018,
+        axis_br_x_pos = -0.005,
+        axis_br_y_pos=-0.02,
+        y_ticks_list1=None,
+        y_ticks_list2=None,
+        use_auto=True,
+        define_ticks=True,
+        text_x=-0.2,
+        text_y=1.065,
+        dataset='areds',
+        stylef='c.mplstyle',
+        spine_linewidth=1.,
+        tick_width=1.,
+        tick_length=5,
+                            ):
     
-#     stylef = '/home/berens/bep973/ifeoma_home/survival_modeling/survival_on_embedding/survival_on_embedding/utils/berenslab.mplstyle'
+    metric_label_dict = {'ibs':'Integrated Brier Score',
+        'concordance_index': "Concordance Index",
+        'brier_score_t2':"Brier Score",
+        'brier_score_t4':"Brier Score",
+        'brier_score_t6':"Brier Score",
+        'brier_score_t8':"Brier Score",
+        "brier_score_t10": "Brier Score",
+        }
+    with plt.style.context(stylef):
 
-#     fig = plt.figure(figsize=(len(all_img_to_plot[0])*3, 4))
-#     gs = gridspec.GridSpec(1, len(all_img_to_plot[0]), figure=fig, wspace=0.3)
+        # ── colour maps ────────────────────────────────────────────────────
+        group_colors = {
+            'supervised BS':  '#1565C0',
+            'out-of-domain FM': '#05771D',
+            'in-domain PR':   '#6A1B9A',
+            'in-domain FM':   '#050606',
+        }
+        group_shades = {
+            'supervised BS':  ['#1565C0', '#42A5F5'],
+            'out-of-domain FM': ['#05771D'],
+            'in-domain PR':   ['#6A1B9A', '#D81B60', '#F3D0DC'],
+            'in-domain FM':   ['#000000', '#90A4AE'],
+        }
+        model_groups = {
+            'dino_nako':        'in-domain FM',
+            'dino_meta':        'out-of-domain FM',
+            'retfound':         'in-domain FM',
+            'mae_nako':         'in-domain PR',
+            'simclr_INet_nako': 'in-domain PR',
+            'simclr_nako':      'in-domain PR',
+            'resnet_scratch':   'supervised BS',
+            'resnet_INet':      'supervised BS',
+        }
 
-#     y_min = min(min(curve) for curves in curves_dict.values() for curve in curves) - 0.02
-#     y_max = 1
-#     x = [1, 2, 3, 4, 5]
+        group_members = {}
+        for model, group in model_groups.items():
+            group_members.setdefault(group, []).append(model)
+        for group in group_members:
+            group_members[group] = sorted(group_members[group])
 
-#     # ── Derive conversion marker position ─────────────────────────────────────
-#     grades = all_img_to_plot[1]   # e.g. [7.0, 8.0, 9.0, 9.0, 11.0]
-#     visit_number = all_img_to_plot[-1]
+        model_colors = {}
+        for group, members in group_members.items():
+            shades = group_shades[group]
+            for i, model in enumerate(members):
+                model_colors[model] = shades[i % len(shades)]
 
-#     if any(g in [10, 11, 12] for g in grades):
+        cm_colors = {}
+        for model, color in model_colors.items():
+            cm_colors[model + '_lin'] = color
+            cm_colors[model + '_mlp'] = color
 
-#         if first_conversion_idx is None:
-#             first_conversion_idx = next(
-#                 (i for i, g in enumerate(grades) if g >= 10), None
-#             )
+     
+        fig, ax = plt.subplots(1, 4, figsize=(14, 3.8), layout='tight')
 
-#             if first_conversion_idx is not None and first_conversion_idx > 0:
-#                 marker_panel_idx = first_conversion_idx - 1   # penultimate panel
-#                 marker_x         = first_conversion_idx + 1   # 1-based conversion year
-#             else:
-#                 marker_panel_idx = None
-#                 marker_x         = None
+        for a in ax:
+            a.set_xscale('log')
+
+        # ── plotting ───────────────────────────────────────────────────────
+        for m, metrics in enumerate(all_metrics):
+            for key, value_ in all_plots.items():
+                value = (
+                    value_
+                    .groupby(['train_size'])[metrics]
+                    .agg(['mean', 'std', 'count'])
+                    .reset_index()
+                    .rename(columns={'mean': metrics})
+                )
+
+                colour    = cm_colors.get(get_base_key(key), '#000000')
+                linestyle = '.--' if '_lin_' in key else '.-'
+                linewidth = 1.5
+                is_fet     = to_plot in key          # True → solid (fet), False → dashed (lin)
+                target_ax  = ax[m * 2 + (1 if is_fet else 0)]   # lin now goes to ax[m*2], fet to ax[m*2+1]
+                # is_fet     = to_plot in key          # True → solid (fet), False → dashed (lin)
+                # target_ax  = ax[m * 2 + (0 if is_fet else 1)]
+
+                target_ax.plot(
+                    value['train_size'], value[metrics],
+                    linestyle,
+                    color=colour, linewidth=linewidth, markersize=4,
+                )
+
+                if show_count:
+                    for x_val, y_val, c_val in zip(
+                            value['train_size'], value[metrics], value['count']):
+                        target_ax.text(x_val, y_val, str(c_val), fontsize=10)
+
+            print('metrics', metrics)
+            if metrics == 'test/ibs':
+                y_min0, y_max0, _ = get_axis_limits(all_plots, metrics)
+
+
+                yticks0 = get_yticks(
+                y_min0, y_max0,
+                use_auto=False, define_ticks=define_ticks,
+                n_ticks=num_y_ticks, ticks=y_ticks_list1,
+            )
+             
+            else:
+                y_min1, y_max1, _ = get_axis_limits(all_plots, metrics)
+                yticks1 = get_yticks(
+                y_min1, y_max1,
+                use_auto=False, define_ticks=define_ticks,
+                n_ticks=num_y_ticks, ticks=y_ticks_list2,
+            )
+            
+
+            for a in [ax[m * 2], ax[m * 2 + 1]]:
+                # if a is not ax[m * 2]:  # hide y ticks on right axis
+                #     a.tick_params(labelleft=False, left = False)
+                if a is ax[m * 2]:
+                    metric_label = metrics.split('/')[1].upper() if '/' in metrics else metrics.upper()
+                    metric_label = metric_label.lower()
+
+                    a.set_ylabel(f'{metric_label_dict[metric_label]}', fontsize=10, 
+                                x=0.045) 
+                if metrics == 'test/ibs':
+                    a.set_yticks(yticks0)
+                    a.set_ylim(yticks0[0], yticks0[-1])
+                    # a.set_ylim(yticks0[0], 0.1)     
+
+                    
+                else:
+                    a.set_yticks(yticks1)
+                    # a.set_ylim(yticks1[0], yticks1[-1])
+                    a.set_ylim(yticks1[0], 1.0)
+
+                a.set_xticks([], minor=True)
+                a.set_xticks([1e2, 1e3, 1e4, 1e5])
+                a.set_xticklabels([r'$10^2$', r'$10^3$', r'$10^4$', r'$10^5$'] 
+                                  )
+                # a.tick_params(axis='y', labelsize=10)   
+                # a.tick_params(axis='x', labelsize=10)  
+                a.tick_params(axis='both', labelsize=8, 
+                              width = tick_width, length = tick_length) 
+
+                a.set_xlim(80, 1.2e5)
+                sns.despine(ax=a, offset={'left': 4, 'bottom': 5}, trim=False)
+                for spine in ['left', 'bottom']:   # only the spines sns.despine kept
+                    a.spines[spine].set_linewidth(spine_linewidth)
+
+                add_axis_break(
+                    a,
+                    size=axis_br_size,
+                    gap=axis_br_gap,
+                    y_pos=axis_br_y_pos,
+                    x_pos = axis_br_x_pos 
+
+                )
+                
+        print(ax[0].yaxis.label.get_fontsize())   # should print 10 if your set_ylabel call took effect
+        print(fig._supxlabel.get_fontsize() if fig._supxlabel else "no supxlabel yet")
+        proxy_mlp = Line2D([0], [0], linestyle='-',  color='gray', linewidth=2, label='MLP head')
+        proxy_lin = Line2D([0], [0], linestyle='--', color='gray', linewidth=2, label='Linear head')    
+
+        
+        group_columns = make_publication_legend_columns(cm_colors, model_groups, group_colors)
+
+        head_column = (
+            [Line2D([0], [0], color='none'), proxy_mlp, proxy_lin],
+            ['Head type', 'MLP head', 'Linear head'],
+            ['Head type', None, None],
+        )
+
+        all_columns = [head_column] + group_columns
+        max_rows = max(len(h) for h, l, r in all_columns)
+
+        flat_handles, flat_labels, flat_raw = [], [], []
+        for handles, labels, raw in all_columns:
+            pad = max_rows - len(handles)
+            handles = handles + [Line2D([0], [0], color='none')] * pad
+            labels  = labels  + [''] * pad
+            raw     = raw     + [None] * pad
+            flat_handles.extend(handles)
+            flat_labels.extend(labels)
+            flat_raw.extend(raw)
+
+
+
+        combined_legend = fig.legend(
+            handles=flat_handles,
+            labels=flat_labels,
+            loc='upper center',
+            bbox_to_anchor=(0.36, -0.01),   # push below panels; tune the y-value
+            ncol=len(all_columns),          # one column per group + head-type
+            fontsize=10,
+            edgecolor='#cccccc',
+            frameon=False,
+            handlelength=2.0,
+            handletextpad=0.5,
+            columnspacing=1.5,
+        )
+
+        for text, raw_label in zip(combined_legend.get_texts(), flat_raw):
+            if raw_label is not None:
+                text.set_fontweight('bold')
+
+        for a, label in zip(ax.flat, 'ABCDEF'):
+            a.text(text_x, text_y, f'{label}', transform=a.transAxes,
+            fontsize=10, fontweight='bold',
+            ha='left', va='top', clip_on=False)
+
+                # <-- pull ylabel closer to axes
+        fig.supxlabel('Longitudinal training set size (#images)', fontsize=10, 
+                                       x=0.38, y=0.01)
+        fig.tight_layout()
+        fig.subplots_adjust(right=0.72)
+        fig.subplots_adjust(bottom=0.15)
+
+        extra_gap = 0.01   # fraction of figure width; increase/decrease to taste
+        for i, a in enumerate(ax):
+            pos = a.get_position()
+            shift = extra_gap if i >= 2 else 0   # shift everything from ax[2] onward to the right
+            a.set_position([pos.x0 + shift, pos.y0, pos.width, pos.height])
+                
+        plt.show()
+        if save_path:
+            fig.savefig(save_path, dpi=300, bbox_inches='tight')
+        
+        return fig, ax
+
+def plot_finetuning_strategies_2x2(
+        all_plots,
+        all_metrics=('test/ibs', 'test/concordance_index'),
+        show_count=False,
+        save_path='',
+        to_plot='fet',
+        num_y_ticks=6,
+        axis_br_size=0.012,
+        axis_br_gap=0.018,
+        axis_br_y_pos=-0.03,
+        axis_br_x_pos=-0.02,
+        y_ticks_list1=None,
+        y_ticks_list2=None,
+        define_ticks=True,
+        text_x=-0.15,
+        text_y=1.0,
+        dataset='areds',
+        stylef='c.mplstyle',
+        spine_linewidth=1.0,
+        tick_fontsize=12,
+        label_fontsize=12,
+        add_y_ticks = True
+):
+    metric_label_dict = {
+        'ibs': 'Integrated Brier Score',
+        'concordance_index': "Concordance Index",
+    }
+    with plt.style.context(stylef):
+
+        group_colors = {
+            'supervised BS':  '#1565C0',
+            'out-of-domain FM': '#05771D',
+            'in-domain PR':   '#6A1B9A',
+            'in-domain FM':   '#050606',
+        }
+        group_shades = {
+            'supervised BS':  ['#1565C0', '#42A5F5'],
+            'out-of-domain FM': ['#05771D'],
+            'in-domain PR':   ['#6A1B9A', '#D81B60', '#F3D0DC'],
+            'in-domain FM':   ['#000000', '#90A4AE'],
+        }
+        model_groups = {
+            'dino_nako':        'in-domain FM',
+            'dino_meta':        'out-of-domain FM',
+            'retfound':         'in-domain FM',
+            'mae_nako':         'in-domain PR',
+            'simclr_INet_nako': 'in-domain PR',
+            'simclr_nako':      'in-domain PR',
+            'resnet_scratch':   'supervised BS',
+            'resnet_INet':      'supervised BS',
+        }
+
+        group_members = {}
+        for model, group in model_groups.items():
+            group_members.setdefault(group, []).append(model)
+        for group in group_members:
+            group_members[group] = sorted(group_members[group])
+
+        model_colors = {}
+        for group, members in group_members.items():
+            shades = group_shades[group]
+            for i, model in enumerate(members):
+                model_colors[model] = shades[i % len(shades)]
+
+        cm_colors = {}
+        for model, color in model_colors.items():
+            cm_colors[model + '_lin'] = color
+            cm_colors[model + '_mlp'] = color
+
+        # ── figure: 2x2 grid ──────────────────────────────────────────────
+        # row 0 -> metric 0 (e.g. IBS),           col 0 = fet, col 1 = lin
+        # row 1 -> metric 1 (e.g. concordance),   col 0 = fet, col 1 = lin
+        width_pt = 452.9679
+        width_in = width_pt / 72.27
+        golden_ratio = (5**0.5 - 1) / 2
+        height_in = (width_in / 2) * golden_ratio * 2 * 1.3
+        fig, ax = plt.subplots(2, 2, figsize=(width_in, height_in), layout='tight')
+
+        for a in ax.flat:
+            a.set_xscale('log')
+
+        for m, metrics in enumerate(all_metrics):
+            for key, value_ in all_plots.items():
+                value = (
+                    value_
+                    .groupby(['train_size'])[metrics]
+                    .agg(['mean', 'std', 'count'])
+                    .reset_index()
+                    .rename(columns={'mean': metrics})
+                )
+
+                colour    = cm_colors.get(get_base_key(key), '#000000')
+                linestyle = '.--' if '_lin_' in key else '.-'
+                linewidth = 1.5
+                is_fet    = to_plot in key
+                target_ax = ax[m, 1 if is_fet else 0]   # fet -> col 1, lin -> col 0 (swap if you want opposite)
+
+                target_ax.plot(
+                    value['train_size'], value[metrics],
+                    linestyle,
+                    color=colour, linewidth=linewidth, markersize=4,
+                )
+
+                if show_count:
+                    for x_val, y_val, c_val in zip(
+                            value['train_size'], value[metrics], value['count']):
+                        target_ax.text(x_val, y_val, str(c_val), fontsize=10)
+
+            if metrics == 'test/ibs':
+                y_min0, y_max0, _ = get_axis_limits(all_plots, metrics)
+                yticks0 = get_yticks(
+                    y_min0, y_max0,
+                    use_auto=False, define_ticks=define_ticks,
+                    n_ticks=num_y_ticks, ticks=y_ticks_list1,
+                )
+            else:
+                y_min1, y_max1, _ = get_axis_limits(all_plots, metrics)
+                yticks1 = get_yticks(
+                    y_min1, y_max1,
+                    use_auto=False, define_ticks=define_ticks,
+                    n_ticks=num_y_ticks, ticks=y_ticks_list2,
+                )
+
+            for col, a in enumerate([ax[m, 0], ax[m, 1]]):
+                # if col == 1:  # hide y ticks on right column
+                #     a.tick_params(labelleft=False, left=add_y_ticks)
+                # else:
+                metric_label = metrics.split('/')[1].upper() if '/' in metrics else metrics.upper()
+                metric_label = metric_label.lower()
+                a.set_ylabel(f'{metric_label_dict[metric_label]}', fontsize=label_fontsize, x=0.045)
+
+                if metrics == 'test/ibs':
+                    a.set_yticks(yticks0)
+                    a.set_ylim(yticks0[0], yticks0[-1])
+                else:
+                    a.set_yticks(yticks1)
+                    a.set_ylim(yticks1[0], 1.0)
+                
+                a.set_xticks([], minor=True)
+                a.set_xticks([1e2, 1e3, 1e4, 1e5])
+                a.set_xticklabels([r'$10^2$', r'$10^3$', r'$10^4$', r'$10^5$'])
+                a.tick_params(axis='both', labelsize=tick_fontsize)
+                a.set_xlim(80, 1.2e5)
+
+                sns.despine(ax=a, offset={'left': 4, 'bottom': 5}, trim=False)
+                for spine in ['left', 'bottom']:
+                    a.spines[spine].set_linewidth(spine_linewidth)
+                a.tick_params(axis='both', width=spine_linewidth, length=5)
+
+                add_axis_break(
+                    a,
+                    size=axis_br_size,
+                    gap=axis_br_gap,
+                    y_pos=axis_br_y_pos,
+                    x_pos=axis_br_x_pos,
+                )
+
+        # shared x-label, once, below the whole grid
+        fig.supxlabel('Longitudinal training set size (#images)', fontsize=label_fontsize, x=0.53, y=0.02)
+
+        # ── legend ─────────────────────────────────────────────────────────
+        proxy_mlp = Line2D([0], [0], linestyle='-',  color='gray', linewidth=2, label='MLP head')
+        proxy_lin = Line2D([0], [0], linestyle='--', color='gray', linewidth=2, label='Linear head')
+
+        group_columns = make_publication_legend_columns(cm_colors, model_groups, group_colors)
+
+        # head_column = (
+        #     [Line2D([0], [0], color='none'), proxy_mlp, proxy_lin],
+        #     ['Head type', 'MLP head', 'Linear head'],
+        #     ['Head type', None, None],
+        # )
+
+        # all_columns = [head_column] + group_columns
+        # max_rows = max(len(h) for h, l, r in all_columns)
+
+        # flat_handles, flat_labels, flat_raw = [], [], []
+        # for handles, labels, raw in all_columns:
+        #     pad = max_rows - len(handles)
+        #     handles = handles + [Line2D([0], [0], color='none')] * pad
+        #     labels  = labels  + [''] * pad
+        #     raw     = raw     + [None] * pad
+        #     flat_handles.extend(handles)
+        #     flat_labels.extend(labels)
+        #     flat_raw.extend(raw)
+
+        # combined_legend = fig.legend(
+        #     handles=flat_handles,
+        #     labels=flat_labels,
+        #     loc='upper center',
+        #     bbox_to_anchor=(0.5, -0.00),   # 2x2 is taller, push legend further down
+        #     ncol=len(all_columns),
+        #     fontsize=10,
+        #     edgecolor='#cccccc',
+        #     frameon=False,
+        #     handlelength=2.0,
+        #     handletextpad=0.5,
+        #     columnspacing=1.5,
+        # )
+        fm_in_handles,  fm_in_labels,  fm_in_raw  = group_columns[0]
+        fm_out_handles, fm_out_labels, fm_out_raw = group_columns[1]
+
+        merged_fm_column = (
+            fm_in_handles + fm_out_handles,
+            fm_in_labels  + fm_out_labels,
+            fm_in_raw     + fm_out_raw,
+        )
+
+        # rebuild group_columns with the two FM groups merged into one column
+        group_columns = [merged_fm_column] + group_columns[2:]   # drop old [0] and [1], keep [2:] (PR, BS) unchanged
+        head_column = (
+            [Line2D([0], [0], color='none'), proxy_mlp, proxy_lin],
+            ['Head type', 'MLP head', 'Linear head'],
+            ['Head type', None, None],
+        )
+
+        all_columns = [head_column] + group_columns   # now 4 columns total instead of 5: head, FM(combined), PR, BS
+        max_rows = max(len(h) for h, l, r in all_columns)
+
+        flat_handles, flat_labels, flat_raw = [], [], []
+        for handles, labels, raw in all_columns:
+            pad = max_rows - len(handles)
+            handles = handles + [Line2D([0], [0], color='none')] * pad
+            labels  = labels  + [''] * pad
+            raw     = raw     + [None] * pad
+            flat_handles.extend(handles)
+            flat_labels.extend(labels)
+            flat_raw.extend(raw)
+
+        combined_legend = fig.legend(
+            handles=flat_handles,
+            labels=flat_labels,
+            loc='upper center',
+            bbox_to_anchor=(0.5, -0.01),
+            ncol=len(all_columns),   # now 4, not 5
+            fontsize=10,
+            edgecolor='#cccccc',
+            frameon=False,
+            handlelength=2.0,
+            handletextpad=0.5,
+            columnspacing=1.5,
+        )
+
+        # for text, raw_label in zip(combined_legend.get_texts(), flat_raw):
+        #     if raw_label is not None:
+        #         text.set_fontweight('bold')
+        for text, raw_label in zip(combined_legend.get_texts(), flat_raw):
+            if raw_label is not None:
+                text.set_fontweight('bold')
+
+        # panel labels A/B/C/D — ax.flat on a 2D array goes row-major: A,B top row; C,D bottom row
+        for a, label in zip(ax.flat, 'ABCD'):
+            a.text(text_x, text_y, f'{label}', 
+                   transform=a.transAxes,
+                   fontsize=10, fontweight='bold',
+                   ha='left', va='top', clip_on=False)
+
+        fig.subplots_adjust(bottom=0.28, hspace=0.35, wspace=0.05)
+
+        plt.show()
+        if save_path:
+            fig.savefig(save_path, dpi=300, bbox_inches='tight')
+
+        return fig, ax
+
+# for col, a in enumerate([ax[m, 0], ax[m, 1]]):
+#     if col == 1:
+#         a.tick_params(labelleft=False)   # keep tick marks, hide numbers
+#     else:
+#         metric_label = metrics.split('/')[1].upper() if '/' in metrics else metrics.upper()
+#         metric_label = metric_label.lower()
+#         a.set_ylabel(f'{metric_label_dict[metric_label]}', fontsize=label_fontsize, x=0.045)
+
+#     if metrics == 'test/ibs':
+#         if col == 1:
+#             a.set_yticks([yticks0[0], yticks0[-1]])   # only first and last tick
 #         else:
-#             marker_x = first_conversion_idx
-#             # marker_panel_idx = first_conversion_idx  -2
-#         print(f'marker x is {marker_x} marker_panel_idx is {marker_panel_idx}')
-#     # ──────────────────────────────────────────────────────────────────────────
-
-#     with plt.style.context(stylef):
-#         for i, img in enumerate(all_img_to_plot[0]):
-#             bax = brokenaxes(
-#                 xlims=((-0.1, 0.002), (0.9, max(x) + 0.1)),
-#                 hspace=0.01,
-#                 d=0.001,
-#                 tilt=45,
-#                 subplot_spec=gs[i],
-#                 fig=fig
-#             )
-
-#             for model, curves in curves_dict.items():
-#                 curve_to_plot = curves[i]
-#                 bax.plot(
-#                     range(1, len(curve_to_plot) + 1),
-#                     curve_to_plot,
-#                     label=new_names[model],
-#                     color=color_groups[model],
-#                     linewidth=1.5
-#                 )
-
-#             # ── Single conversion marker on the x-axis ────────────────────────
-#             if i == marker_panel_idx:
-#                 # bax.axs[1] is the main (right) axes where the curves are drawn
-#                 bax.axs[1].plot(
-#                     marker_x, 0.02,              # sit right on the x-axis
-#                     marker='v',
-#                     markersize=10,
-#                     color='grey',
-#                     linestyle='none',
-#                     clip_on=False,            # don't clip if right at the edge
-#                     zorder=5
-#                 )
-#             # ──────────────────────────────────────────────────────────────────
-
-#             img_id = all_img_to_plot[2][0]
-#             bax.set_title(f"ID {img_id} V_no {visit_number[i]} Label {int(grades[i])}", fontsize=10)
-#             bax.set_ylim(y_min, y_max)
-#             if i == 0:
-#                 bax.set_ylabel('S(t)', fontsize=10)       # y-label on the leftmost panel only
-#             if i == len(all_img_to_plot[0]) // 2:
-#                 bax.set_xlabel('Year', fontsize=10) 
-#             bax.axs[0].set_xticks([])
-#             bax.axs[1].set_xticks([1, 2, 3, 4, 5, 6, 7])
-#             for ax in bax.axs:
-#                 ax.tick_params(axis='both', labelsize=10)
-#                 ax.set_yticks([0, 0.5, 1.0])
-
-#             if i == len(all_img_to_plot[0]) - 1:
-#                 handles, labels = [], []
-#                 for model in curves_dict:
-#                     handles.append(plt.Line2D([0], [0],
-#                                               color=color_groups[model],
-#                                               linewidth=1.5))
-#                     labels.append(new_names[model])
-
-#                 if marker_panel_idx is not None:
-#                     handles.append(plt.Line2D([0], [0],
-#                                               marker='v', color='w',
-#                                               markerfacecolor='grey',
-#                                               markersize=8,
-#                                               linestyle='none'))
-#                     labels.append('Conversion')
-
-#                 leg = bax.legend(
-#                     handles, labels,
-#                     loc='lower left',
-#                     bbox_to_anchor=(1, 0.2),
-#                     labelspacing=1.5,
-#                     fontsize=8,
-#                     handler_map={plt.Line2D: HandlerLine2D(numpoints=3)}
-#                 )
-#                 for line in leg.get_lines():
-#                     line.set_linewidth(1.5)
-#     if save_path is not None:
-#         plt.savefig(f'{save_path}/surv_curves_{img_id}.pdf')
-#     plt.show()
-
+#             a.set_yticks(yticks0)
+#         a.set_ylim(yticks0[0], 0.1)
+#     else:
+#         if col == 1:
+#             a.set_yticks([yticks1[0], yticks1[-1]])
+#         else:
+#             a.set_yticks(yticks1)
+#         a.set_ylim(yticks1[0], 1.0)
+#     ...
