@@ -252,8 +252,7 @@ def plot_finetuning_strategies(
                 target_ax.plot(
                     value['train_size'], value[metrics],
                     linestyle,
-                    color=colour, linewidth=linewidth, markersize=5,
-                    markevery=list(range(1, len(value['train_size'])))
+                    color=colour, linewidth=linewidth, markersize=4,
                 )
 
                 if show_count:
@@ -310,19 +309,19 @@ def plot_finetuning_strategies(
                 a.tick_params(axis='both', labelsize=8, 
                               width = tick_width, length = tick_length) 
 
-                a.set_xlim(100, 1.2e5)
-                sns.despine(ax=a, offset={'left': 10, 'bottom': 5}, trim=False)
+                a.set_xlim(80, 1.2e5)
+                sns.despine(ax=a, offset={'left': 4, 'bottom': 5}, trim=False)
                 for spine in ['left', 'bottom']:   # only the spines sns.despine kept
                     a.spines[spine].set_linewidth(spine_linewidth)
 
-                # add_axis_break(
-                #     a,
-                #     size=axis_br_size,
-                #     gap=axis_br_gap,
-                #     y_pos=axis_br_y_pos,
-                #     x_pos = axis_br_x_pos 
+                add_axis_break(
+                    a,
+                    size=axis_br_size,
+                    gap=axis_br_gap,
+                    y_pos=axis_br_y_pos,
+                    x_pos = axis_br_x_pos 
 
-                # )
+                )
                 
         print(ax[0].yaxis.label.get_fontsize())   # should print 10 if your set_ylabel call took effect
         print(fig._supxlabel.get_fontsize() if fig._supxlabel else "no supxlabel yet")
@@ -545,13 +544,13 @@ def plot_finetuning_strategies_2x2(
                     a.spines[spine].set_linewidth(spine_linewidth)
                 a.tick_params(axis='both', width=spine_linewidth, length=5)
 
-                # add_axis_break(
-                #     a,
-                #     size=axis_br_size,
-                #     gap=axis_br_gap,
-                #     y_pos=axis_br_y_pos,
-                #     x_pos=axis_br_x_pos,
-                # )
+                add_axis_break(
+                    a,
+                    size=axis_br_size,
+                    gap=axis_br_gap,
+                    y_pos=axis_br_y_pos,
+                    x_pos=axis_br_x_pos,
+                )
 
         # shared x-label, once, below the whole grid
         fig.supxlabel('Longitudinal training set size (#images)', fontsize=label_fontsize, x=0.53, y=0.02)

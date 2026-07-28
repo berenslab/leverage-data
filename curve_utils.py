@@ -306,7 +306,7 @@ def plot_one_image_curve(or_df, test, freeze_encoder = 1, train_size = 500,
     print('to_plot_row_index is', to_plot_row_index)
     
     # selects all the images related to an ID. The row from the dataframe is determined by to_plot_row_index
-    all_images_to_plot =  sample_.loc[to_plot_row_index, ['image_path', 'diagnosis_amd_grade', 'patient_id', "visit_number", "converter"]]
+    all_images_to_plot =  sample_.loc[to_plot_row_index, ['image_path', 'diagnosis_amd_grade', 'patient_id',"eye_id", "visit_number", "converter"]]
     all_images_to_plot['train_size'] = train_size
     print('all_images_to_plot', all_images_to_plot.shape)
     print('all_images_to_plot', all_images_to_plot)
