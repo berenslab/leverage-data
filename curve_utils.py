@@ -542,7 +542,7 @@ def get_model_curves(df, model_name, img_to_plot, CHKPT_DIR):
 
 
 def get_all_curves(all_images_to_plot0, model_list, dfl_ssl, CHKPT_DIR):
-    print(all_images_to_plot0)
+    # print(all_images_to_plot0)
     all_images_to_plot0 = all_images_to_plot0['image_path']
     curves_dict = {}
     for img_to_plot in all_images_to_plot0:
