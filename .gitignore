@@ -3,6 +3,7 @@
 __pycache__/*
 quality_results/*
 results/*
+results_o/*
 datasets/*
 log_dir/*
 figures/*
