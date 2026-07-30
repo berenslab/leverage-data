@@ -21,9 +21,10 @@ from sklearn.model_selection import train_test_split, KFold
 from tqdm import tqdm
 # import fundus_image_toolbox as fit
 
-config_file = '.secrets.yaml'
+config_file = '../../.secrets.yaml'
 cfg = OmegaConf.load(config_file)
-root = cfg['DATASETS']['NAKO']['MLCLOUD']
+# print(cfg['DATASETS']['CIN'])
+root = cfg['DATASETS']['CIN']['nako_main']
 
 # Variables of the NAKO dataset
 NAKO_DIR = {'590': f'{root}'}
