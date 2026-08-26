@@ -23,10 +23,10 @@ from sklearn.decomposition import PCA
 from openTSNE import TSNE
 from omegaconf import OmegaConf
 from sklearn.metrics import roc_auc_score, balanced_accuracy_score, accuracy_score
-from multi_level_split.util import train_test_split as patient_id_split
 from utils import linear_acc
 from linear_probe_utils import NAKOBase, extract_embeddings
 from load_models import get_encoder
+from sklearn.linear_model import LogisticRegression
 
 torch.set_float32_matmul_precision('medium')
 random.seed(2024)
@@ -47,7 +47,7 @@ def main():
     parser.add_argument("--project", type=str, default='')
     parser.add_argument("--batch_size", type=int, default=512)
     parser.add_argument("--mask_ratio", type=float, default=0.5)
-    parser.add_argument("--testrun", type=bool, default=False)
+    parser.add_argument("--testrun", type=int, default=0)
     parser.add_argument("--use_scheduler", type=bool, default=False)
     parser.add_argument("--lr", type=float, default=5e-4)
     parser.add_argument("--weight_decay", type=float, default=0.05)
@@ -63,33 +63,23 @@ def main():
 
     config_file = '.secrets.yaml'
     cfg = OmegaConf.load(config_file)
-    dataset_root = cfg['DATASETS']['NAKO']['MLCLOUD']
+    dataset_root = cfg['DATASETS']['NAKO']['mlcloud']
     image_dir = os.path.join(dataset_root, 'images_lowres/224')
 
-    weights_path =  cfg['MODEL']['mlcloud_original'][args.weights_name]
+    weights_path =  cfg['MODEL']['mlcloud'][args.weights_name]
 
     nako_mean=[0.419, 0.209, 0.122]
     nako_std = [0.280, 0.164, 0.113]
 
     nako_transform_train = transforms.Compose([
 
-            transforms.RandomResizedCrop(224,  scale=(0.2, 1.0)),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            transforms.Normalize(mean = nako_mean, 
-                                std = nako_std)
-            ])
-    nako_transform_val = transforms.Compose([
-            transforms.Resize(256, interpolation=3),
-            transforms.CenterCrop(224),
+        #     transforms.RandomResizedCrop(224,  scale=(0.2, 1.0)),
+        #     transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             transforms.Normalize(mean = nako_mean, 
                                 std = nako_std)
             ])
 
-    
-    classify_metadata_df = pd.read_csv(f'{dataset_root}/NAKO_metadata/df_classify.csv')
-    classify_metadata_df["index"] = range(classify_metadata_df.shape[0])
 
     dataset_train_all = NAKOBase(image_dir,
                              f'{dataset_root}/NAKO_metadata/df_classify.csv',
@@ -111,7 +101,8 @@ def main():
     acc, auc = linear_acc(X = backbone_feat, 
                           y = label1, 
                           id = ids_, 
-                       stratify_col='label' )
+                       stratify_col='label',
+                        knn_classify=True )
     print(f"acc {acc} auc {auc}")
     print("---- \n computing tsne \n ---")
 

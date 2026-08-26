@@ -1,9 +1,9 @@
 
-from nako import get_nako_paths, IMAGE_TYPES, NakoDataset
+from .nako import get_nako_paths, IMAGE_TYPES, NakoDataset, NAKONewDataset
 from torch.utils.data import DataLoader
 from torchvision import transforms
-from utils import aug2string
-
+from utils.helpers import aug2string
+import pandas as pd
 
 def load_nako( image_size = 224, batch_size = 512, 
               augment_train = None, 
@@ -73,4 +73,40 @@ def load_nako( image_size = 224, batch_size = 512,
         return dataset_train, dataset_test, dataset_val, transforms_
     print(f"return loader  is {return_loader} therefore returning ify")
     return train_loader, test_loader, (val_loader, dataset_val), transforms_
+
+
+def load_new_nako( image_size = 224, augment_train = None, normalize = True, ):
+    
+    root = '/home/berens/bep973/ifeoma_home/data/NAKO/NAKO_macula'
+    image_folder = f'{root}/NAKO_macula'
+    all_data = f'{root}/nako_reports_macula_and_grade.csv'
+    vanilla_train = pd.read_csv(all_data)
+    train_ssl = vanilla_train
+    val = train_ssl
+    test = train_ssl
+
+    if augment_train is None:
+        if normalize:
+            augment_train = transforms.Compose([transforms.ToTensor(),
+                                         transforms.Resize(image_size), 
+                                        #  transforms.RandomResizedCrop(image_size, scale=(0.2, 1.0)),  
+                                        transforms.RandomHorizontalFlip(),
+                                        #  transforms.RandomGrayscale(p=0.2),
+                                        transforms.Normalize(mean=[0.419, 0.209, 0.122],
+                                                             std = [0.280, 0.164, 0.113] )
+                                        # transforms.Normalize(mean = [0.417, 0.201, 0.114],
+                                        #                      std =  [0.265, 0.140, 0.090])
+                                         
+                                         ])
+        else:
+            augment_train = transforms.Compose([transforms.ToTensor(),
+                                         transforms.Resize(image_size), 
+                                        #  transforms.RandomResizedCrop(image_size, scale=(0.2, 1.0)),  
+                                        transforms.RandomHorizontalFlip(),
+                                        #  transforms.RandomGrayscale(p=0.2),
+                                         ])
+    
+    dataset_train = NAKONewDataset(image_folder, train_ssl, transform = augment_train)
+    return dataset_train
+
 

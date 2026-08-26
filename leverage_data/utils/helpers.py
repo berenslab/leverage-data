@@ -76,7 +76,7 @@ def linear_acc(X,
         KNN.fit(X_train, y_train)
         # use balanced accuracy for imbalanced datasets
         y_pred = KNN.predict(X_test)
-        acc = round(balanced_accuracy_score(y_test, y_pred) * 100, 2)
+        acc = round(accuracy_score(y_test, y_pred) * 100, 2)
 
 
         if n_unique_labels < 3:
@@ -86,11 +86,11 @@ def linear_acc(X,
             y_prob = KNN.predict_proba(X_test)
             auc = round(roc_auc_score(y_test, y_prob, multi_class='ovo') * 100, 2)
 
-        return acc, auc, k_values, acc_scores
+        return acc, auc#, k_values, acc_scores
     
     else:
         if n_unique_labels < 3:
-            lin = LogisticRegression( solver='lbfgs',  max_iter= 1000)
+            lin = LogisticRegression( solver='saga',  max_iter= 1000)
 
         else:
             lin = LogisticRegression(multi_class='multinomial', solver='lbfgs',  max_iter= 1000)
@@ -98,7 +98,7 @@ def linear_acc(X,
         lin.fit(X_train, y_train)
         # use balanced accuracy for imbalanced datasets
         y_pred = lin.predict(X_test)
-        acc = round(balanced_accuracy_score(y_test, y_pred) * 100, 2)
+        acc = round(accuracy_score(y_test, y_pred) * 100, 2)
         if n_unique_labels < 3:
             y_pred = lin.predict(X_test)
             auc = round(roc_auc_score(y_test, y_pred) * 100, 2)

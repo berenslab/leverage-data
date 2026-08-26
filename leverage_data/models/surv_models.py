@@ -11,6 +11,7 @@ from torchvision import transforms as T
 from timm.models.layers import trunc_normal_
 import inspect
 import numpy as np
+import models_mae
 # import pytorch_lightning as pl
 # print('model params',inspect.signature(RETFound_mae))
 
@@ -278,20 +279,15 @@ class SwinEncoder(nn.Module):
         return x  # features from the last BasicBlock (before decoder)
 
 def mae_nako_weights(model_weight):
-    from  .RETFound import models_mae
-    from .lightning_helpers import OptimCfg, MAELightning
+    
+    arch = '_'.join(model_weight.split('/')[-1].split('__')[0].split('arc')[1:]).strip('_')
+    mae = getattr(models_mae, arch)() 
+    checkpoint = torch.load(model_weight, map_location='cpu', weights_only=False)
+    mae.load_state_dict(checkpoint, strict = True)
+    embed_dim = mae.patch_embed.proj.out_channels
 
-    # model_weight = '/gpfs01/berens/user/inwabufo/survcnn_skeleton/survival_on_embedding/output/mae_weights_only.pt'
+    return mae, embed_dim
 
-    mae = models_mae.mae_vit_base_patch16_dec512d8b(norm_pix_loss=True)
-    lit = MAELightning(mae) # this is called because I want the exact structure used for training but it is the model_mae forward function that is executed
-    model_light_chkpt = torch.load(model_weight, map_location='cpu', weights_only = True)
-    lit.load_state_dict(model_light_chkpt["state_dict"], strict=True)
-    print('Loaded model')
-    lit = lit.to('cuda')
-    model = lit.mae
-    embed_dim = model.patch_embed.proj.out_channels
-    return model, embed_dim
     
 class MAEBackbone(nn.Module):
     """Feature extractor from  MaskedAutoencoderViT encoder."""

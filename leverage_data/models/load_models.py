@@ -46,7 +46,7 @@ def get_encoder(weights_path:str=None,  device:str="cuda:0",
         else:
             raise ValueError('Please check that the name of the simclr model is correct')
 
-    elif ('nako_mae' in weights_path.lower()):# or \
+    elif 'arc_mae_vit_base_patch16__RS_RC_HF_NR_300_512_MR_0.5_2025-09-09_11:13:39.pt' in weights_path:# or \
         model, embed_dim = mae_nako_weights(weights_path)
         
         backbone = ModelWithMAE(model, use_cls= True)

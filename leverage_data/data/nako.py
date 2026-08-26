@@ -23,7 +23,7 @@ from tqdm import tqdm
 
 config_file = '.secrets.yaml'
 cfg = OmegaConf.load(config_file)
-root = cfg['DATASETS']['NAKO']['MLCLOUD']
+root = cfg['DATASETS']['NAKO']['mlcloud']
 
 # Variables of the NAKO dataset
 NAKO_DIR = {'590': f'{root}'}
@@ -688,6 +688,35 @@ def set_seed(seed: int = 42) -> None:
     # Set a fixed value for the hash seed
     os.environ["PYTHONHASHSEED"] = str(seed)
 
+class NAKONewDataset(Dataset):
+    def __init__(
+        self,
+        image_dir,
+        metadata_df,
+        transform= None,
+        **kwargs
+    ) -> None:
 
+        self.image_dir = image_dir
+        self.metadata_df = metadata_df
+        self.transform = transform       
+        
+    def __getitem__(self, idx: int):
+        row= self.metadata_df.iloc[idx]
+        
+        image_path = row["new_image_name"]
+        label = 0
+        img_filename = os.path.join(self.image_dir, f"{image_path}")
+        # print(patient_id, label, image_path)
+        image = Image.open(img_filename).convert("RGB")
+
+        if self.transform is not None:
+            image = self.transform(image)
+        
+        return image, label
+
+
+    def __len__(self):
+        return self.metadata_df.shape[0]
 # if __name__ == '__main__':
 #     print('nako.py')

@@ -83,6 +83,7 @@ def pick_same_index_across_lists(row):
     # print('--------------------------------------')
     # print()
     list_lengths = [len(v) for v in row if isinstance(v, list)]
+    print('list lengths', list_lengths)
     if not list_lengths:
         return row
 
@@ -139,6 +140,8 @@ def draw_curves_grid(data_to_plot, curves_dict,
     x = [1, 2, 3, 4, 5]
 
     grades = data_to_plot['diagnosis_amd_grade']
+    grades = [int(g) for g in grades]
+    print('grades', grades)
     visit_number = data_to_plot['visit_number']
     marker_x = None
     marker_panel_idx_local = marker_panel_idx
@@ -146,11 +149,15 @@ def draw_curves_grid(data_to_plot, curves_dict,
     if any(g in [10, 11, 12] for g in grades):
         if first_conversion_idx is None:
             fc_idx = next((i for i, g in enumerate(grades) if g >= 10), None)
+            print('fc_idx',fc_idx)
             if fc_idx is not None and fc_idx > 0:
                 marker_panel_idx_local = fc_idx - 1
                 marker_x = fc_idx + 1
+
         else:
             marker_x = first_conversion_idx
+        print('first conversion index  marker is', marker_x)
+
     # ------------------------------------------------------------------
 
     ctx = plt.style.context(stylef) if standalone else contextlib.nullcontext()
@@ -202,46 +209,47 @@ def draw_curves_grid(data_to_plot, curves_dict,
         if save_path is not None:
             plt.savefig(f'{save_path}/surv_curves_{img_id}.pdf')
         plt.show()
-def draw_curves_grid(full_data, full_curves_dict, n_per_patient=5,
-                      n_rows=4, n_cols=4, first_conversion_idx=None,
-                      marker_panel_idx=None, save_path=None, stylef=None,
-                      show_legend_once=True):
-    n_patients = len(full_data['image_path']) // n_per_patient
-    assert n_patients <= n_rows * n_cols, \
-        f"{n_patients} patients don't fit in a {n_rows}x{n_cols} grid"
+# def draw_curves_grid(full_data, full_curves_dict, n_per_patient=5,
+#                       n_rows=4, n_cols=4, first_conversion_idx=None,
+#                       marker_panel_idx=None, save_path=None, stylef=None,
+#                       show_legend_once=True):
+#     n_patients = len(full_data['image_path']) // n_per_patient
+#     assert n_patients <= n_rows * n_cols, \
+#         f"{n_patients} patients don't fit in a {n_rows}x{n_cols} grid"
 
-    fig = plt.figure(figsize=(n_cols * n_per_patient * 2.2, n_rows * n_per_patient * 0.9))
-    outer_gs = gridspec.GridSpec(n_rows, n_cols, figure=fig, wspace=0.5, hspace=0.7)
+#     fig = plt.figure(figsize=(n_cols * n_per_patient * 2.2, n_rows * n_per_patient * 0.9))
+#     outer_gs = gridspec.GridSpec(n_rows, n_cols, figure=fig, wspace=0.5, hspace=0.7)
 
-    with plt.style.context(stylef):
-        for p in range(n_patients):
-            start, end = p * n_per_patient, (p + 1) * n_per_patient
+#     with plt.style.context(stylef):
+#         for p in range(n_patients):
+#             start, end = p * n_per_patient, (p + 1) * n_per_patient
 
-            data_to_plot = {
-                'image_path': full_data['image_path'][start:end],
-                'diagnosis_amd_grade': full_data['diagnosis_amd_grade'][start:end],
-                'visit_number': full_data['visit_number'][start:end],
-            }
-            curves_dict = {
-                model: curves[start:end] for model, curves in full_curves_dict.items()
-            }
+#             data_to_plot = {
+#                 'image_path': full_data['image_path'][start:end],
+#                 'diagnosis_amd_grade': full_data['diagnosis_amd_grade'][start:end],
+#                 'visit_number': full_data['visit_number'][start:end],
+#             }
+#             curves_dict = {
+#                 model: curves[start:end] for model, curves in full_curves_dict.items()
+#             }
 
-            row, col = divmod(p, n_cols)
-            draw_curves_grid(
-                data_to_plot, curves_dict,
-                first_conversion_idx=first_conversion_idx,
-                marker_panel_idx=marker_panel_idx,
-                fig=fig, subplot_spec=outer_gs[row, col],
-                show_legend=(not show_legend_once) or (p == n_patients - 1)
-            )
+#             row, col = divmod(p, n_cols)
+#             draw_curves_grid(
+#                 data_to_plot, curves_dict,
+#                 first_conversion_idx=first_conversion_idx,
+#                 marker_panel_idx=marker_panel_idx,
+#                 fig=fig, subplot_spec=outer_gs[row, col],
+#                 show_legend=(not show_legend_once) or (p == n_patients - 1)
+#             )
 
-    if save_path is not None:
-        plt.savefig(f'{save_path}/surv_curves_grid.pdf', bbox_inches='tight')
-    plt.show()
+#     if save_path is not None:
+#         plt.savefig(f'{save_path}/surv_curves_grid.pdf', bbox_inches='tight')
+#     plt.show()
 
 
 def plot_one_image_curve(or_df, test, freeze_encoder = 1, train_size = 500, 
                          num_images = 2, has_event = True, CHKPT_DIR = '', num0 = None):
+
     dfl = or_df[(or_df['freeze_encoder'] == freeze_encoder) & (or_df['survival_head'] == 'mlp') & (or_df['train_size'] == train_size)]
     dfl_ssl = dfl.groupby(['weights_path']).agg(list)
 

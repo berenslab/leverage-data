@@ -1,19 +1,14 @@
-import math
+import yaml
 from dataclasses import dataclass
-from typing import Optional, Any
 import argparse
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-from torch.optim import AdamW
-from torch.optim.lr_scheduler import CosineAnnealingLR
-from pytorch_lightning.strategies import DDPStrategy
-from time_distance.src.load_data import load_areds, load_nako, load_new_nako
+from data.load_data import load_nako, load_new_nako
 from torch.utils.data import ConcatDataset
 from torch.utils.data import DataLoader
 import pytorch_lightning as pl
-from time_distance.MAE import  models_mae
-from lightning_helpers import OptimCfg, MAELightning
+from models import models_mae
+from utils.lightning_helpers import OptimCfg, MAELightning
 from pytorch_lightning.loggers import WandbLogger
 import datetime
 import os
@@ -39,7 +34,13 @@ def main():
     parser.add_argument("--epochs", type=int, default=2)
     parser.add_argument("--patch_size", type=int, default=16)
     parser.add_argument("--mask_ratio", type=float, default=0.5)
-    parser.add_argument("--lr", type=float, default=1.5e-4)
+    parser.add_argument("--use_imagenet_weights", type=int, default=0)
+    parser.add_argument("--blr", type=float, default=1.5e-4)
+    parser.add_argument("--lr", type=float, default=None)
+    parser.add_argument("--num_devices", type=int, default=1)
+    parser.add_argument("--num_nodes", type=int, default=4)
+    parser.add_argument("--accum_iter", type=int, default=1)
+    parser.add_argument("--eff_batch_size", type=int, default=512)
     parser.add_argument("--weight_decay", type=float, default=0.05)
     parser.add_argument('--warmup_epochs', type=int, default=10, metavar='N',
                         help='epochs to warmup LR')
@@ -48,12 +49,19 @@ def main():
                         help='Use (per-patch) normalized pixels as targets for computing loss')
     parser.add_argument('--model', default='mae_vit_base_patch16', type=str, metavar='MODEL',
                         help='Name of model to train')
+    parser.add_argument('--weights_name', default='mae_pretrain_vit_base', type=str, metavar='weights',
+                        help='Name of model to train')
     args = parser.parse_args()
 
     start_time = datetime.datetime.now()
     start_time_fmt = start_time.strftime("%Y-%m-%d %H:%M:%S")
 
     args.testrun = bool(args.testrun)
+    args.use_imagenet_weights = bool(args.use_imagenet_weights)
+    num_gpus_total = args.num_devices * args.num_nodes
+    args.batch_size = args.eff_batch_size//num_gpus_total//args.accum_iter
+
+
     limit_train_batches = None
     limit_val_batches = None    
     limit_test_batches = None
@@ -99,7 +107,7 @@ def main():
     config = vars(args)
     run_name = f'{args.ssl_method}_{transforms_}_imgsize_{args.img_size}_{args.epochs}_{args.batch_size}_{start_time_fmt}'
 
-    exp_dir = f"../../results/TMI/{args.dataset_name}/{args.ssl_method}/arc_{args.model}_{args.comment}_{transforms_}_{args.epochs}_{args.batch_size}_MR_{args.mask_ratio}_PS_{args.patch_size}_{start_time_fmt}"
+    exp_dir = f"pre_train/{args.dataset_name}/{args.ssl_method}/arc_{args.model}_{args.comment}_{transforms_}_{args.epochs}_{args.batch_size}_MR_{args.mask_ratio}_PS_{args.patch_size}_{start_time_fmt}"
     
     os.makedirs(exp_dir, exist_ok=True)
     os.makedirs(f"{exp_dir}/checkpoints", exist_ok=True)
@@ -107,12 +115,34 @@ def main():
 
     print("CUDA device count:", torch.cuda.device_count())
     #--------------------------------------------Model------------------------------------#
+    mae_model = models_mae.__dict__[args.model](norm_pix_loss=args.norm_pix_loss )
+    if args.use_imagenet_weights:
+        
+        imagenet_checkpoint = torch.load(os.path.join('weights', f"{args.weights_name}.pth"), map_location = 'cpu')
+        if 'mae_visualize_vit_base' in args.weights_name:
+            msg =  mae_model.load_state_dict(imagenet_checkpoint['model'], strict=True)
+        elif 'mae_pretrain_vit_base' in args.weights_name:
+            msg =  mae_model.load_state_dict(imagenet_checkpoint['model'], strict=False)
+        else:
+            raise ValueError(f'unknown {args.weights_name}')
 
-    mae = models_mae.__dict__[args.model](norm_pix_loss=args.norm_pix_loss )
+        print(msg)  
+    mae = mae_model
+    
 
-    # mae = MAELightning()
+    assert isinstance(mae, torch.nn.Module), f"mae is {type(mae)}, not a model!"
+    n_trainable = sum(p.requires_grad for p in mae.parameters())
+    print(f"Trainable params: {n_trainable}")
+
+    
+    if args.lr is None:  
+        args.lr = args.blr * args.eff_batch_size / 256
 
     optim_cfg = OptimCfg(lr=args.lr, weight_decay=args.weight_decay)
+
+    with open(os.path.join(exp_dir, "config.yaml"), "w") as f:
+        yaml.dump(config, f, default_flow_style=False)
+
     lit = MAELightning(mae, compile_model=args.compile, optim_cfg = optim_cfg,
                         val_dataset=dataset_val, **config)
     wandb_logger = WandbLogger(
@@ -136,14 +166,18 @@ def main():
     dirpath=f"{exp_dir}/checkpoints",
     filename="mae-last",
     save_last=True             
-)
+)   
+
+    
     trainer = pl.Trainer(
         max_epochs=args.epochs,
         precision="bf16-mixed" if torch.cuda.is_available() else 32,
         accelerator="gpu",
-        devices = "auto",
+        devices = args.num_devices,
+        num_nodes=args.num_nodes,
         log_every_n_steps=25,
         strategy="ddp",   # 
+        accumulate_grad_batches=args.accum_iter,   
         logger=wandb_logger,
         limit_train_batches=limit_train_batches,
         limit_val_batches=limit_val_batches,
@@ -152,8 +186,6 @@ def main():
     )
 
     trainer.fit(lit, train_loader, val_loader)
-# ------------------- Example usage script -------------------
 if __name__ == "__main__":
     main()
     
-# python3 mae_lightning.py --batch_size 512 --dataset_name nako --ssl_method MAE --patch_size 14 --mask_ratio 0.5 --epochs 300 --testrun 1

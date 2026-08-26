@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools>=42", "wheel", "pip"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "leverage_data"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "imageio>=2.37.0",
+    "ipykernel>=6.29.5",
+    "ipython>=8.18.1",
+    "jupyter-black>=0.4.0",
+    "matplotlib>=3.9.4",
+    "numpy>=2.0.2",
+    "opencv-python>=4.11.0.86",
+    "pandas>=2.2.3",
+    "pip>=25.0",
+    "pyyaml>=6.0.2",
+    "scikit-image>=0.24.0",
+    "scikit-survival>=0.23.1",
+    "tqdm>=4.67.1",
+    "multi-level-split @ git+https://github.com/lmkoch/multi-level-split",
+    "wandb>=0.19.6",
+]
+
+[tool.pixi.workspace]
+channels = ["pytorch", "nvidia", "conda-forge",  "main", "r", "msys2"]
+platforms = ["linux-64"]
+ 
+[tool.pixi.dependencies]
+pip = "*"
+python = "3.11.*"
+setuptools = "*"
+wheel = "*"
+cmake = "*"
+ninja = "*"
+gcc_linux-64 = "*"
+gxx_linux-64 = "*"
+gfortran_linux-64 = "*"
+r-base = "*"
+rpy2 = "*"
+r-timeroc = "*"
+r-survival = "*"
+qdldl-python = "*"
+ipykernel = ">=7.1.0,<8"
+jupyter = ">=1.1.1,<2"
+einops = ">=0.8.1,<0.9"
+pytorch = "*"
+torchvision = "*"
+pytorch-cuda = "12.1.*"
+pytorch-lightning = "*"
+pillow = "*"  
+timm = ">=1.0.22,<2"
+
+ 
+[tool.pixi.pypi-dependencies]
+leverage_data = {editable = true, path = "."}
+
+[tool.pixi.pypi-options]
+no-build-isolation = ["qdldl"]
+
+
+
+[tool.setuptools.packages.find]
+include = ["leverage_data"]
