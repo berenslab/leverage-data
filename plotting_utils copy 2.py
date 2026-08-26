@@ -11,9 +11,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 import os
 from PIL.PngImagePlugin import PngImageFile
-import matplotlib as mpl
 plt.rcParams.get('font.family', 'arial')
-# mpl.rc_file('../../.matplotlibrc')
+
 load_dotenv()
 
 telegram_pin = os.environ.get('TELEGRAM_PIN')
@@ -172,7 +171,6 @@ def plot_finetuning_strategies(
         spine_linewidth=1.,
         tick_width=1.,
         tick_length=5,
-        fontsize=6
                             ):
     
     metric_label_dict = {'ibs':'Integrated Brier Score',
@@ -259,14 +257,14 @@ def plot_finetuning_strategies(
                 target_ax.plot(
                     value['train_size'], value[metrics],
                     linestyle,
-                    color=colour, linewidth=linewidth, markersize=3,
+                    color=colour, linewidth=linewidth, markersize=5,
                     markevery=list(range(1, len(value['train_size'])))
                 )
 
                 if show_count:
                     for x_val, y_val, c_val in zip(
                             value['train_size'], value[metrics], value['count']):
-                        target_ax.text(x_val, y_val, str(c_val), fontsize=fontsize)
+                        target_ax.text(x_val, y_val, str(c_val), fontsize=10)
 
             print('metrics', metrics)
             if metrics == 'test/ibs':
@@ -295,7 +293,7 @@ def plot_finetuning_strategies(
                     metric_label = metrics.split('/')[1].upper() if '/' in metrics else metrics.upper()
                     metric_label = metric_label.lower()
 
-                    a.set_ylabel(f'{metric_label_dict[metric_label]}', fontsize=fontsize, 
+                    a.set_ylabel(f'{metric_label_dict[metric_label]}', fontsize=10, 
                                 x=0.045) 
                 if metrics == 'test/ibs':
                     a.set_yticks(yticks0)
@@ -314,11 +312,11 @@ def plot_finetuning_strategies(
                                   )
                 # a.tick_params(axis='y', labelsize=10)   
                 # a.tick_params(axis='x', labelsize=10)  
-                a.tick_params(axis='both', labelsize=4, 
+                a.tick_params(axis='both', labelsize=8, 
                               width = tick_width, length = tick_length) 
 
                 a.set_xlim(100, 1.2e5)
-                sns.despine(ax=a, offset={'left': 3, 'bottom': 3}, trim=False)
+                sns.despine(ax=a, offset={'left': 10, 'bottom': 5}, trim=False)
                 for spine in ['left', 'bottom']:   # only the spines sns.despine kept
                     a.spines[spine].set_linewidth(spine_linewidth)
 
@@ -360,31 +358,31 @@ def plot_finetuning_strategies(
 
 
 
-        combined_legend = fig.legend(
-            handles=flat_handles,
-            labels=flat_labels,
-            loc='upper center',
-            bbox_to_anchor=(0.36, -0.01),   # push below panels; tune the y-value
-            ncol=len(all_columns),          # one column per group + head-type
-            fontsize=fontsize,
-            edgecolor='#cccccc',
-            frameon=False,
-            handlelength=2.0,
-            handletextpad=0.5,
-            columnspacing=1.5,
-        )
+        # combined_legend = fig.legend(
+        #     handles=flat_handles,
+        #     labels=flat_labels,
+        #     loc='upper center',
+        #     bbox_to_anchor=(0.36, -0.01),   # push below panels; tune the y-value
+        #     ncol=len(all_columns),          # one column per group + head-type
+        #     fontsize=10,
+        #     edgecolor='#cccccc',
+        #     frameon=False,
+        #     handlelength=2.0,
+        #     handletextpad=0.5,
+        #     columnspacing=1.5,
+        # )
 
-        for text, raw_label in zip(combined_legend.get_texts(), flat_raw):
-            if raw_label is not None:
-                text.set_fontweight('bold')
+        # for text, raw_label in zip(combined_legend.get_texts(), flat_raw):
+        #     if raw_label is not None:
+        #         text.set_fontweight('bold')
 
         for a, label in zip(ax.flat, 'ABCDEF'):
             a.text(text_x, text_y, f'{label}', transform=a.transAxes,
-            fontsize=fontsize, fontweight='bold',
+            fontsize=10, fontweight='bold',
             ha='left', va='top', clip_on=False)
 
                 # <-- pull ylabel closer to axes
-        fig.supxlabel('Longitudinal training set size (#images)', fontsize=fontsize, 
+        fig.supxlabel('Longitudinal training set size (#images)', fontsize=10, 
                                        x=0.38, y=0.01)
         fig.tight_layout()
         fig.subplots_adjust(right=0.72)

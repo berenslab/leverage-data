@@ -11,9 +11,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 import os
 from PIL.PngImagePlugin import PngImageFile
-import matplotlib as mpl
 plt.rcParams.get('font.family', 'arial')
-# mpl.rc_file('../../.matplotlibrc')
+
 load_dotenv()
 
 telegram_pin = os.environ.get('TELEGRAM_PIN')
@@ -172,7 +171,6 @@ def plot_finetuning_strategies(
         spine_linewidth=1.,
         tick_width=1.,
         tick_length=5,
-        fontsize=6
                             ):
     
     metric_label_dict = {'ibs':'Integrated Brier Score',
@@ -227,12 +225,7 @@ def plot_finetuning_strategies(
             cm_colors[model + '_mlp'] = color
 
      
-        # fig, ax = plt.subplots(1, 4, figsize=(14, 3.8), layout='tight')
-        width_pt = 452.9679
-        width_in = width_pt / 72.27
-        golden_ratio = (5**0.5 - 1) / 2
-        height_in = (width_in / 2) * golden_ratio * 2 * 1.3
-        fig, ax = plt.subplots(1, 4, figsize=(width_in, 1.5), layout='tight')
+        fig, ax = plt.subplots(1, 4, figsize=(14, 3.8), layout='tight')
 
         for a in ax:
             a.set_xscale('log')
@@ -250,7 +243,7 @@ def plot_finetuning_strategies(
 
                 colour    = cm_colors.get(get_base_key(key), '#000000')
                 linestyle = '.--' if '_lin_' in key else '.-'
-                linewidth = 1.
+                linewidth = 1.5
                 is_fet     = to_plot in key          # True → solid (fet), False → dashed (lin)
                 target_ax  = ax[m * 2 + (1 if is_fet else 0)]   # lin now goes to ax[m*2], fet to ax[m*2+1]
                 # is_fet     = to_plot in key          # True → solid (fet), False → dashed (lin)
@@ -259,14 +252,13 @@ def plot_finetuning_strategies(
                 target_ax.plot(
                     value['train_size'], value[metrics],
                     linestyle,
-                    color=colour, linewidth=linewidth, markersize=3,
-                    markevery=list(range(1, len(value['train_size'])))
+                    color=colour, linewidth=linewidth, markersize=4,
                 )
 
                 if show_count:
                     for x_val, y_val, c_val in zip(
                             value['train_size'], value[metrics], value['count']):
-                        target_ax.text(x_val, y_val, str(c_val), fontsize=fontsize)
+                        target_ax.text(x_val, y_val, str(c_val), fontsize=10)
 
             print('metrics', metrics)
             if metrics == 'test/ibs':
@@ -295,7 +287,7 @@ def plot_finetuning_strategies(
                     metric_label = metrics.split('/')[1].upper() if '/' in metrics else metrics.upper()
                     metric_label = metric_label.lower()
 
-                    a.set_ylabel(f'{metric_label_dict[metric_label]}', fontsize=fontsize, 
+                    a.set_ylabel(f'{metric_label_dict[metric_label]}', fontsize=10, 
                                 x=0.045) 
                 if metrics == 'test/ibs':
                     a.set_yticks(yticks0)
@@ -314,22 +306,22 @@ def plot_finetuning_strategies(
                                   )
                 # a.tick_params(axis='y', labelsize=10)   
                 # a.tick_params(axis='x', labelsize=10)  
-                a.tick_params(axis='both', labelsize=4, 
+                a.tick_params(axis='both', labelsize=8, 
                               width = tick_width, length = tick_length) 
 
-                a.set_xlim(100, 1.2e5)
-                sns.despine(ax=a, offset={'left': 3, 'bottom': 3}, trim=False)
+                a.set_xlim(80, 1.2e5)
+                sns.despine(ax=a, offset={'left': 4, 'bottom': 5}, trim=False)
                 for spine in ['left', 'bottom']:   # only the spines sns.despine kept
                     a.spines[spine].set_linewidth(spine_linewidth)
 
-                # add_axis_break(
-                #     a,
-                #     size=axis_br_size,
-                #     gap=axis_br_gap,
-                #     y_pos=axis_br_y_pos,
-                #     x_pos = axis_br_x_pos 
+                add_axis_break(
+                    a,
+                    size=axis_br_size,
+                    gap=axis_br_gap,
+                    y_pos=axis_br_y_pos,
+                    x_pos = axis_br_x_pos 
 
-                # )
+                )
                 
         print(ax[0].yaxis.label.get_fontsize())   # should print 10 if your set_ylabel call took effect
         print(fig._supxlabel.get_fontsize() if fig._supxlabel else "no supxlabel yet")
@@ -366,7 +358,7 @@ def plot_finetuning_strategies(
             loc='upper center',
             bbox_to_anchor=(0.36, -0.01),   # push below panels; tune the y-value
             ncol=len(all_columns),          # one column per group + head-type
-            fontsize=fontsize,
+            fontsize=10,
             edgecolor='#cccccc',
             frameon=False,
             handlelength=2.0,
@@ -380,11 +372,11 @@ def plot_finetuning_strategies(
 
         for a, label in zip(ax.flat, 'ABCDEF'):
             a.text(text_x, text_y, f'{label}', transform=a.transAxes,
-            fontsize=fontsize, fontweight='bold',
+            fontsize=10, fontweight='bold',
             ha='left', va='top', clip_on=False)
 
                 # <-- pull ylabel closer to axes
-        fig.supxlabel('Longitudinal training set size (#images)', fontsize=fontsize, 
+        fig.supxlabel('Longitudinal training set size (#images)', fontsize=10, 
                                        x=0.38, y=0.01)
         fig.tight_layout()
         fig.subplots_adjust(right=0.72)
@@ -552,13 +544,13 @@ def plot_finetuning_strategies_2x2(
                     a.spines[spine].set_linewidth(spine_linewidth)
                 a.tick_params(axis='both', width=spine_linewidth, length=5)
 
-                # add_axis_break(
-                #     a,
-                #     size=axis_br_size,
-                #     gap=axis_br_gap,
-                #     y_pos=axis_br_y_pos,
-                #     x_pos=axis_br_x_pos,
-                # )
+                add_axis_break(
+                    a,
+                    size=axis_br_size,
+                    gap=axis_br_gap,
+                    y_pos=axis_br_y_pos,
+                    x_pos=axis_br_x_pos,
+                )
 
         # shared x-label, once, below the whole grid
         fig.supxlabel('Longitudinal training set size (#images)', fontsize=label_fontsize, x=0.53, y=0.02)
