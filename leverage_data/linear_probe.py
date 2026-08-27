@@ -6,27 +6,16 @@ import asyncio
 import datetime
 import os, random
 import numpy as np
-import pandas as pd
-from torch.utils.data import Subset
-from load_data import load_nako
 from torch.utils.data import DataLoader
-# from time_distance.MAE import models_mae
-# from lightning_helpers import MAELightning
 from torchvision import transforms
-from sklearn.metrics import accuracy_score, ConfusionMatrixDisplay
 from multi_level_split.util import train_test_split as patient_id_split
-from linear_probe_utils import predict_mae_transforms, change_lbls
-from plotting_utils import plot_embeddings, create_legend
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
+from utils.plotting_utils import plot_embeddings
 from sklearn.decomposition import PCA
 from openTSNE import TSNE
 from omegaconf import OmegaConf
-from sklearn.metrics import roc_auc_score, balanced_accuracy_score, accuracy_score
-from utils import linear_acc
+from utils.helpers import linear_acc
 from linear_probe_utils import NAKOBase, extract_embeddings
-from load_models import get_encoder
-from sklearn.linear_model import LogisticRegression
+from models.load_models import get_encoder
 
 torch.set_float32_matmul_precision('medium')
 random.seed(2024)

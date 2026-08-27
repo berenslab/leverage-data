@@ -12,6 +12,11 @@ leverage_data/pre_train/*
 leverage_data/scripts/*
 leverage_data.egg-info/*
 leverage_data/__pycache__/*
+leverage_data/slurm_logs/*
+
+leverage_data/models/__pycache__/*
+leverage_data/utils/__pycache__/*
+leverage_data/data/__pycache__/*
 
 .weights.yaml
 .env

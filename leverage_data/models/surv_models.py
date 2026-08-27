@@ -11,7 +11,7 @@ from torchvision import transforms as T
 from timm.models.layers import trunc_normal_
 import inspect
 import numpy as np
-import models_mae
+from . import models_mae
 # import pytorch_lightning as pl
 # print('model params',inspect.signature(RETFound_mae))
 

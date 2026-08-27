@@ -14,6 +14,19 @@ from PIL.PngImagePlugin import PngImageFile
 import matplotlib as mpl
 plt.rcParams.get('font.family', 'arial')
 # mpl.rc_file('../../.matplotlibrc')
+
+from .plotting_helpers import get_axis_limits, get_base_key, \
+    get_yticks, add_axis_break, make_publication_legend, make_publication_legend_columns
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from itertools import product
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
+from matplotlib.lines import Line2D
+import matplotlib.patches as mpatches
+import math
+
 load_dotenv()
 
 telegram_pin = os.environ.get('TELEGRAM_PIN')
@@ -134,18 +147,6 @@ async def plot_embeddings(results,
         message = TelegramBot()
         await message.send(f'{s_path}.png')
 
-
-from plotting_helpers import get_axis_limits, get_base_key, \
-    get_yticks, add_axis_break, make_publication_legend, make_publication_legend_columns
-import numpy as np
-import pandas as pd
-import seaborn as sns
-from itertools import product
-import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
-from matplotlib.lines import Line2D
-import matplotlib.patches as mpatches
-import math
 
 
 def plot_finetuning_strategies(
