@@ -39,7 +39,7 @@ def main():
     parser.add_argument("--num_devices", type=int, default=1)
     parser.add_argument("--num_nodes", type=int, default=4)
     parser.add_argument("--accum_iter", type=int, default=1)
-    parser.add_argument("--eff_batch_size", type=int, default=512)
+    parser.add_argument("--eff_batch_size", type=int, default=1024)
     parser.add_argument("--weight_decay", type=float, default=0.05)
     parser.add_argument('--warmup_epochs', type=int, default=10, metavar='N',
                         help='epochs to warmup LR')
