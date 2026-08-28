@@ -1,5 +1,4 @@
 import yaml
-from dataclasses import dataclass
 import argparse
 import torch
 import torch.nn.functional as F

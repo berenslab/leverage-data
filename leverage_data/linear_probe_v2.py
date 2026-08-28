@@ -4,6 +4,7 @@ import asyncio
 import datetime
 import os, random
 import numpy as np
+import pandas as pd
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from utils.plotting_utils import plot_embeddings
@@ -13,13 +14,35 @@ from omegaconf import OmegaConf
 from utils.helpers import linear_acc
 from linear_probe_utils import NAKOBase, extract_embeddings
 from models.load_models import get_encoder
+from data.load_data import load_nako, load_new_nako
+from multi_level_split.util import train_test_split as patient_id_split
+from torch.utils.data import Subset
 
 torch.set_float32_matmul_precision('medium')
 random.seed(2024)
 
 ENTITY = 'success_vera'
+class LabeledSubset(Subset):
+    @property
+    def labels(self):
+        return np.array(self.dataset.labels)[self.indices]
+    
+    @property
+    def ids(self):
+        return np.array(self.dataset.ids)[self.indices]
+
+    @property
+    def image_paths(self):
+        return np.array(self.dataset.image_paths)[self.indices]
 
 
+    
+def change_lbls(dataset_, diseased_ids):
+    for i, ids in enumerate(dataset_.ids):
+        if ids in diseased_ids: 
+            dataset_.labels[i] = 1
+        else:
+            dataset_.labels[i] = 0
 
 def main():
     parser = argparse.ArgumentParser()
@@ -67,11 +90,77 @@ def main():
             ])
 
 
-    dataset_train_all = NAKOBase(image_dir,
-                             f'{dataset_root}/NAKO_metadata/df_classify.csv',
-                             transform=nako_transform_train)
-    train_loader_all = DataLoader(dataset_train_all, batch_size = args.batch_size, shuffle = False)
-    print(len(train_loader_all))
+    # dataset_train_all = NAKOBase(image_dir,
+    #                          f'{dataset_root}/NAKO_metadata/df_classify.csv',
+    #                          transform=nako_transform_train)
+    # train_loader_all = DataLoader(dataset_train_all, batch_size = args.batch_size, shuffle = False)
+    # print(len(train_loader_all))
+    all_data = load_nako( 
+                        image_size = args.img_size, 
+                        batch_size = args.batch_size, 
+                        ssl_method = args.ssl_method,
+                        return_loader=False,
+                        normalize= True,
+                        return_all = True,
+                        augment_test=nako_transform_train,
+                        augment_train=nako_transform_train
+                                    )
+    all_dataset_train, _, _, _, transforms_ = all_data
+
+    print(type(all_dataset_train.labels))
+    print(type(all_dataset_train.labels[0]))
+    print(all_dataset_train.labels[0])
+
+    diseased_eyes_df = pd.read_csv('/home/berens/bep973/ifeoma_home/data/NAKO/NAKO_metadata/old/diseased_eyes.csv')
+    diseased_ids = list(diseased_eyes_df['ID'])
+    change_lbls(all_dataset_train, diseased_ids)
+    
+    disease_labels = all_dataset_train.labels.astype(int)
+
+    df = pd.DataFrame({'ID': all_dataset_train.ids, 'labels': disease_labels})
+    df['index'] = range(df.shape[0])
+
+    print(df['labels'].value_counts())
+    print('labels',np.unique(disease_labels, return_counts = True))
+
+    train, test_val = patient_id_split(df, "index", 
+                                        split_by = 'ID', 
+                                        test_split=0.2, seed=2021, 
+                                        stratify_by = 'labels'
+                                            ) 
+    print(f"balanced datset pre-train shape {train.shape}, test shape {test_val.shape}")
+
+    train_healthy = train[train['labels'] == 1].shape[0]
+    test_healthy = test_val[test_val['labels'] == 1].shape[0]
+
+    train1 = train[train['labels'] == 0].sample(n=train_healthy * 2)
+    train2 = train[train['labels'] == 1]
+    train_df = pd.concat([train1, train2])
+    # print(train_df.shape)
+    # train_df['labels'].value_counts()
+
+    test1 = test_val[test_val['labels'] == 0].sample(n=test_healthy * 2)
+    test2 = test_val[test_val['labels'] == 1]
+    test_df = pd.concat([test1, test2])
+    # print(test_df.shape)
+    # test_df['labels'].value_counts()
+
+    test_list = list(test_df['index'].values)
+    test_list = list(map(int, test_list))
+
+    train_list = list(train_df['index'].values)
+    train_list = list(map(int, train_list))
+
+    train_dataset = LabeledSubset(all_dataset_train, train_list)
+    test_dataset  = LabeledSubset(all_dataset_train, test_list)
+
+    print(f"train_dataset \n \n {np.unique(train_dataset.labels, return_counts=True)}")
+    print(f"test_dataset \n \n {np.unique(test_dataset.labels, return_counts=True)}")
+
+
+    dataset_concat = torch.utils.data.ConcatDataset([train_dataset, test_dataset ]) # dataset_train, dataset_test, 
+    train_loader_all = DataLoader(dataset_concat, batch_size = args.batch_size, shuffle = False)
+    
 
     encoder, in_features, weights_path_returned, backbone_model_str = get_encoder(weights_path, args.device, 
                                                                              img_size=args.img_size,)

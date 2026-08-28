@@ -6,14 +6,12 @@ import torch.nn as nn
 import torch.distributed as dist
 import torchvision.models as models
 from torchvision import transforms as T
-# from .RETFound.util.pos_embed import interpolate_pos_embed
-# from  .RETFound.models_vit import RETFound_mae
+from  .models_vit import RETFound_mae
 from timm.models.layers import trunc_normal_
 import inspect
 import numpy as np
 from . import models_mae
-# import pytorch_lightning as pl
-# print('model params',inspect.signature(RETFound_mae))
+
 
 #-----------------------Models----------------------#
 def retfound_encoder(img_size=224, root = ''):
@@ -26,7 +24,7 @@ def retfound_encoder(img_size=224, root = ''):
    
     # weights downloaded from https://drive.google.com/uc?id=1l62zbWUFTlp214SvK6eMwPQZAzcwoeBE on 22 May, 2025 from https://huggingface.co/open-eye/RETFound_MAE
     # load RETFound weights
-    checkpoint = torch.load(f'{root}/retfound_cfp.pt', map_location='cpu', weights_only=False) #the weight only has the encoder
+    checkpoint = torch.load(f'{root}', map_location='cpu', weights_only=False) #the weight only has the encoder
     checkpoint_model = checkpoint['model']
     state_dict = model.state_dict()
     
@@ -43,7 +41,7 @@ def retfound_encoder(img_size=224, root = ''):
             del checkpoint_model[k]
 
     # # interpolate position embedding
-    interpolate_pos_embed(model, checkpoint_model)
+    models_mae.interpolate_pos_embed(model, checkpoint_model)
 
     # # load pre-trained model
     model.load_state_dict(checkpoint_model, strict=False)
@@ -126,27 +124,27 @@ def load_dinov2_weights(model, ckpt_path):
     print("Unexpected keys:", unexpected_keys)
     return model, model.embed_dim
 
-def load_dino_nako(weights_path = None, config_file = None, nako_model = True):
-    from .dino import build_model_from_cfg
-    from omegaconf import OmegaConf
+# def load_dino_nako(weights_path = None, config_file = None, nako_model = True):
+#     from .dino import build_model_from_cfg
+#     from omegaconf import OmegaConf
 
 
-    cfg = OmegaConf.load(config_file)
-    _, teacher_backbone, embed_dim = build_model_from_cfg(cfg)
+#     cfg = OmegaConf.load(config_file)
+#     _, teacher_backbone, embed_dim = build_model_from_cfg(cfg)
     
-    checkpoints = torch.load(weights_path, map_location= 'cpu')
-    print("\n \n ***dino model checkpointkeys*** \n \n",checkpoints.keys())
+#     checkpoints = torch.load(weights_path, map_location= 'cpu')
+#     print("\n \n ***dino model checkpointkeys*** \n \n",checkpoints.keys())
 
-    if nako_model:
-        print('loading nako dino model')
-        backbone_state_dict = {k.replace('backbone.', ''):v
-                            for k, v in  checkpoints['teacher'].items() 
-                            if k.startswith('backbone.')}
-        teacher_backbone.load_state_dict(backbone_state_dict, strict=True)
-    else:
-        print('loading dino pretrained model')
-        teacher_backbone.load_state_dict(checkpoints, strict=True)
-    return teacher_backbone, embed_dim
+#     if nako_model:
+#         print('loading nako dino model')
+#         backbone_state_dict = {k.replace('backbone.', ''):v
+#                             for k, v in  checkpoints['teacher'].items() 
+#                             if k.startswith('backbone.')}
+#         teacher_backbone.load_state_dict(backbone_state_dict, strict=True)
+#     else:
+#         print('loading dino pretrained model')
+#         teacher_backbone.load_state_dict(checkpoints, strict=True)
+#     return teacher_backbone, embed_dim
 
 class DINOBackbone(nn.Module):
     """Feature extractor from DINOv2 encoder."""

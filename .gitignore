@@ -17,6 +17,7 @@ leverage_data/slurm_logs/*
 leverage_data/models/__pycache__/*
 leverage_data/utils/__pycache__/*
 leverage_data/data/__pycache__/*
-
+leverage_data/data/__pycache__/*
 .weights.yaml
 .env
+temp.txt
