@@ -94,7 +94,7 @@ def get_encoder(weights_path:str=None,  device:str="cuda:0",
 
     elif 'dinov2_vitb14_pretrain' in weights_path.lower():
         print('in dinov2_vitb14_pretrain ')
-        config_file = '/home/berens/bep973/ifeoma_home/survival_modeling/survival_on_embedding/scripts/ssl_default_config.yaml'
+        config_file = 'sssl_default_config.yaml'
         cfg = OmegaConf.load(config_file)
         _, teacher_backbone, embed_dim = build_model_from_cfg(cfg)
         dino_model, embed_dim = load_dinov2_weights(teacher_backbone,

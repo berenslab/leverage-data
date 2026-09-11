@@ -5,6 +5,7 @@ leverage_data/quality_results/*
 leverage_data/backup/*
 leverage_data/results/*
 leverage_data/datasets/*
+leverage_data/old_code/*
 leverage_data/log_dir/*
 leverage_data/figures/*
 leverage_data/.secrets.yaml

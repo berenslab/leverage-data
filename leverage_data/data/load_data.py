@@ -77,7 +77,7 @@ def load_nako( image_size = 224, batch_size = 512,
 
 def load_new_nako( image_size = 224, augment_train = None, normalize = True, ):
     
-    root = '/home/berens/bep973/ifeoma_home/data/NAKO/NAKO_macula'
+    root = 'NAKO_macula'
     image_folder = f'{root}/NAKO_macula'
     all_data = f'{root}/nako_reports_macula_and_grade.csv'
     vanilla_train = pd.read_csv(all_data)
