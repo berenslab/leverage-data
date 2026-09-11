@@ -3,7 +3,7 @@ requires = ["setuptools>=42", "wheel", "pip"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "leverage_data"
+name = "ssl_disease_progression"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -57,7 +57,7 @@ timm = ">=1.0.22,<2"
 
  
 [tool.pixi.pypi-dependencies]
-leverage_data = {editable = true, path = "."}
+ssl_disease_progression = {editable = true, path = "."}
 
 [tool.pixi.pypi-options]
 no-build-isolation = ["qdldl"]
@@ -65,4 +65,4 @@ no-build-isolation = ["qdldl"]
 
 
 [tool.setuptools.packages.find]
-include = ["leverage_data"]
+include = ["ssl_disease_progression"]
