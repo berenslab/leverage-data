@@ -1,6 +1,8 @@
 .venv/*
 .vscode/*
 __pycache__/*
+leverage_data/*
+leverage_data.egg-info/*
 leverage_data/quality_results/*
 leverage_data/backup/*
 leverage_data/results/*
