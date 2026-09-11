@@ -2,6 +2,7 @@
 .vscode/*
 __pycache__/*
 leverage_data/quality_results/*
+leverage_data/backup/*
 leverage_data/results/*
 leverage_data/datasets/*
 leverage_data/log_dir/*
