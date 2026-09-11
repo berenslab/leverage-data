@@ -13,11 +13,16 @@ import datetime
 import os
 from pytorch_lightning.callbacks import ModelCheckpoint
 from torchvision import transforms
+from pytorch_lightning.strategies import DDPStrategy
+from datetime import timedelta
 
 torch.set_float32_matmul_precision('medium')
 
 ENTITY = 'success_vera'
 
+import time
+def log(msg):
+    print(f"[{time.strftime('%H:%M:%S')}] [PID {os.getpid()}] {msg}", flush=True)
 
 def main():
 
@@ -115,6 +120,8 @@ def main():
     print("CUDA device count:", torch.cuda.device_count())
     #--------------------------------------------Model------------------------------------#
     mae_model = models_mae.__dict__[args.model](norm_pix_loss=args.norm_pix_loss )
+    log("model built")
+
     if args.use_imagenet_weights:
         
         imagenet_checkpoint = torch.load(os.path.join('weights', f"{args.weights_name}.pth"), map_location = 'cpu')
@@ -125,7 +132,9 @@ def main():
         else:
             raise ValueError(f'unknown {args.weights_name}')
 
-        print(msg)  
+        print(msg)
+        log("checkpoint loaded")
+  
     mae = mae_model
     
 
@@ -144,6 +153,8 @@ def main():
 
     lit = MAELightning(mae, compile_model=args.compile, optim_cfg = optim_cfg,
                         val_dataset=dataset_val, **config)
+    log("lightning module built, entering trainer.fit")
+
     wandb_logger = WandbLogger(
     project=args.project,   
     name=run_name,          
@@ -175,16 +186,18 @@ def main():
         devices = args.num_devices,
         num_nodes=args.num_nodes,
         log_every_n_steps=25,
-        strategy="ddp",   # 
+        # strategy="ddp",   # 
         accumulate_grad_batches=args.accum_iter,   
         logger=wandb_logger,
         limit_train_batches=limit_train_batches,
         limit_val_batches=limit_val_batches,
-        
+        strategy=DDPStrategy(timeout=timedelta(minutes=20)),
+
         callbacks=[periodic_ckpt, last_ckpt]
     )
 
     trainer.fit(lit, train_loader, val_loader)
+    log("trainer.fit returned")
 if __name__ == "__main__":
     main()
     
