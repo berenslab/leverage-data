@@ -3,6 +3,7 @@
 __pycache__/*
 leverage_data/*
 leverage_data.egg-info/*
+leverage_data.zip
 .weights.yaml
 .env
 temp.txt
