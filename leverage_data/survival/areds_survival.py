@@ -1,16 +1,13 @@
 from argparse import ArgumentParser
 from datetime import datetime
-import pandas as pd
 from pathlib import Path
 import numpy as np
-import os
 from omegaconf import OmegaConf
-from survival_on_embedding import (
+from leverage_data.survival import (
     get_train_loader_surv,
     get_val_loader_surv,
     get_test_loader_surv,
     get_dataset,
-    set_seed,
     get_survival_head,
     Logger,
     get_encoder,
@@ -23,8 +20,6 @@ import copy
 import torch
 import warnings
 warnings.filterwarnings("ignore")
-warnings.filterwarnings('ignore', category=UserWarning, module='pydantic._internal._generate_schema')
-warnings.filterwarnings('ignore', category=FutureWarning, module='timm.models.layers')
 
 
 def verify_batchsize(train_size):
@@ -234,5 +229,3 @@ def main():
 if __name__ == "__main__":
    
     main()
-
-# python3 areds_survival.py --freeze_encoder 1 --dataset_name areds --survival_head linear --seed 1230 --cloud mlcloud --train_size 100 --testrun 1

@@ -1,0 +1,21 @@
+Metadata-Version: 2.4
+Name: leverage_data
+Version: 0.1.0
+Summary: Add your description here
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+Requires-Dist: imageio>=2.37.0
+Requires-Dist: ipykernel>=6.29.5
+Requires-Dist: ipython>=8.18.1
+Requires-Dist: jupyter-black>=0.4.0
+Requires-Dist: matplotlib>=3.9.4
+Requires-Dist: numpy>=2.0.2
+Requires-Dist: opencv-python>=4.11.0.86
+Requires-Dist: pandas>=2.2.3
+Requires-Dist: pip>=25.0
+Requires-Dist: pyyaml>=6.0.2
+Requires-Dist: scikit-image>=0.24.0
+Requires-Dist: scikit-survival>=0.23.1
+Requires-Dist: tqdm>=4.67.1
+Requires-Dist: multi-level-split @ git+https://github.com/lmkoch/multi-level-split
+Requires-Dist: wandb>=0.19.6

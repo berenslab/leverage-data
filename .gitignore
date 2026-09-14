@@ -1,9 +1,11 @@
 .venv/*
 .vscode/*
-__pycache__/*
-leverage_data/*
-leverage_data.egg-info/*
-leverage_data.zip
 .weights.yaml
 .env
 temp.txt
+
+__pycache__/*
+model/__pycache__/*
+data/__pycache__/*
+common/__pycache__/*
+predict/__pycache__/*
