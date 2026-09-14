@@ -1,1 +1,0 @@
-from .models_mae import mae_vit_base_patch16
