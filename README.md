@@ -4,12 +4,12 @@ Code and derived results for the paper *"Self-supervised Pre-training Helps Reti
 
 ## Overview
 
-Longitudinal imaging cohorts — the kind needed to model *when* a disease will progress rather than just whether it is present — are scarce and small. Cross-sectional data (one image per participant) is comparatively abundant. This project asks whether self-supervised pre-training on abundant cross-sectional data can close that gap for disease progression modelling.
+Longitudinal imaging cohorts - the kind needed to model *when* a disease will progress rather than just whether it is present - are scarce and small. Cross-sectional data (one image per participant) is comparatively abundant. This project asks whether self-supervised pre-training on abundant cross-sectional data can close that gap for disease progression modelling.
 
 We study this for age-related macular degeneration (AMD):
 
-- **Pre-training data:** [NAKO] — a large cross-sectional cohort of retinal fundus images (~153k images).
-- **Downstream task:** [AREDS] — a longitudinal cohort (8,784 eyes, 55,173 images) used to predict time-to-conversion to late AMD via deep survival analysis.
+- **Pre-training data:** [NAKO] - a large cross-sectional cohort of retinal fundus images (~153k images).
+- **Downstream task:** [AREDS] - a longitudinal cohort (8,784 eyes, 55,173 images) used to predict time-to-conversion to late AMD via deep survival analysis.
 
 We evaluate:
 
