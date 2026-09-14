@@ -24,10 +24,10 @@ Each encoder is paired with a lightweight Cox proportional-hazards survival head
 ## Repository structure
 
 ```
-.
-├── pretraining/          # SSL pre-training pipelines (SimCLR, MAE, DINOv2/LoRA) on NAKO
-├── survival/             # Cox proportional-hazards survival head, training & evaluation
-└── stats_analysis/             # GAM-based statistical decomposition
+├── 
+|  ├── pretraining/ #  SSL pre-training pipelines
+|  ├── survival/  # # Cox proportional-hazards evaluation 
+|  └── stats_analysis/ # GAM-based statistical decomposition
 ```
 
 
